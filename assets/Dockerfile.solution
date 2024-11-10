@@ -1,0 +1,5 @@
+FROM golang:latest
+WORKDIR /app
+COPY temp/solution.go .
+RUN go build -o solution solution.go
+CMD ["./solution"]

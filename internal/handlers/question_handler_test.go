@@ -48,9 +48,9 @@ func (m *MockQuestionService) DeleteQuestion(id string) error {
 	return args.Error(0)
 }
 
-func (m *MockQuestionService) TestQuestion(id string, userFunction string) (bool, error) {
-	args := m.Called(id, userFunction)
-	return args.Bool(0), args.Error(1)
+func (m *MockQuestionService) TestQuestion(id string, solution model.Solution) (string, error) {
+	args := m.Called(id, solution)
+	return args.String(0), args.Error(1)
 }
 
 func TestCreateQuestion(t *testing.T) {

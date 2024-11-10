@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: solution-pod
+spec:
+  containers:
+  - name: solution-container
+    image: user-solution:latest
+    imagePullPolicy: IfNotPresent
+    env:
+    - name: TEST_CASES
+      value: "default"

@@ -104,19 +104,17 @@ func (h *QuestionHandler) DeleteQuestion(c *gin.Context) {
 // TestQuestion simulates running a user-provided function against test cases for a question.
 func (h *QuestionHandler) TestQuestion(c *gin.Context) {
 	id := c.Param("id")
-	var request struct {
-		UserFunction string `json:"user_function"`
-	}
-	if err := c.ShouldBindJSON(&request); err != nil {
+	var submission model.Solution
+	if err := c.ShouldBindJSON(&submission); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	result, err := h.Service.TestQuestion(id, request.UserFunction)
+	result, err := h.Service.TestQuestion(id, submission)
 	if err != nil {
 		HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"result": result})
+	c.JSON(http.StatusOK, gin.H{"output": result})
 }
 
 func HandleError(c *gin.Context, err error) {

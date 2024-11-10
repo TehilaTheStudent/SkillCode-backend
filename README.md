@@ -1,4 +1,4 @@
-**SkillCode Backend**
+# **SkillCode Backend**
 
 This repository contains the backend implementation for the SkillCode application. The backend is built using Go and the Gin framework, with MongoDB as the database.
 
@@ -48,6 +48,6 @@ The repository includes three levels of tests to ensure application reliability:
 
 #### **End-to-End (E2E) Tests**
 ```bash
-docker-compose -f docker-compose.test.yml up --abort-on-container-exit
+docker-compose -f docker-compose.test.yaml up --abort-on-container-exit
 ```
 ---

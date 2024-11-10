@@ -16,4 +16,4 @@ COPY . .
 # Install additional dependencies for testing
 RUN apt-get update && apt-get install -y netcat-openbsd
 
-# No CMD needed here because it is overridden by docker-compose.test.yml
+# No CMD needed here because it is overridden by docker-compose.test.yaml

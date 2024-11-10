@@ -52,7 +52,7 @@ jobs:
     - name: Run Integration Tests
       if: success()
       run: |
-        docker-compose -f docker-compose.yml up -d mongo
+        docker-compose -f docker-compose.yaml up -d mongo
         go test ./tests/integration -v
         docker-compose down
 
@@ -60,4 +60,4 @@ jobs:
     - name: Run E2E Tests
       if: success()
       run: |
-        docker-compose -f docker-compose.test.yml up --abort-on-container-exit
+        docker-compose -f docker-compose.test.yaml up --abort-on-container-exit
