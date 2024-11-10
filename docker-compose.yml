@@ -17,7 +17,8 @@ services:
     depends_on:
       - mongo
     environment:
-      - MONGO_URI=mongodb://mongo:27017/skillcode_db
+      - MONGO_URI=mongodb://mongo:27017
+      - MONGO_DB=skillcode_db
 
 volumes:
   mongo-data:

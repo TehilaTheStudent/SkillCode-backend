@@ -1,30 +1,53 @@
-# SkillCode Backend
+**SkillCode Backend**
 
-## Overview
+This repository contains the backend implementation for the SkillCode application. The backend is built using Go and the Gin framework, with MongoDB as the database.
 
-This repository contains the **BASIC** backend implementation for the SkillCode application. The backend is built using Go and the Gin framework, with MongoDB as the database.
+---
 
-## Highlights
+### **Highlights**
+- A basic Go server with CRUD operations for the `Question` entity.
+- Supports testing solutions submitted for questions.
+- Docker images created for the backend: `tehilathestudent/skillcode-backend`.
 
-- Implemented basic Go server with CRUD operations on `Question` entity.
-- Docker images created: `tehilathestudent/skillcode-backend`.
+---
 
-## API Endpoints
+### **API Endpoints**
+- **Create a Question**: POST `http://localhost:8080/questions`
+- **Get a Question by ID**: GET `http://localhost:8080/questions/:id`
+- **Get All Questions**: GET `http://localhost:8080/questions`
+- **Update a Question**: PUT `http://localhost:8080/questions/:id`
+- **Delete a Question**: DELETE `http://localhost:8080/questions/:id`
+- **Submit and Test Solution**: POST `http://localhost:8080/questions/:id/test`
 
-- **Create a Question** (POST): `http://localhost:8080/questions`
-- **Get a Question by ID** (GET): `http://localhost:8080/questions/:id`
-- **Get All Questions** (GET): `http://localhost:8080/questions`
-- **Update a Question** (PUT): `http://localhost:8080/questions/:id`
-- **Delete a Question** (DELETE): `http://localhost:8080/questions/:id`
-- **Submit and Test Solution** (POST): `http://localhost:8080/questions/:id/test`
+---
 
-### Running the Application
+### **Running the Application**
 
-To start the application with Docker Compose, use the following command:
-
+To start the application with Docker Compose, run:
 ```bash
 docker-compose up
 ```
+This command launches both the MongoDB database and the Go backend service.
 
-This command will launch both the MongoDB database and the Go backend services.
+---
 
+### **Testing**
+
+The repository includes three levels of tests to ensure application reliability:
+
+#### **Unit Tests**
+  ```bash
+  go test ./internal/... -v
+  ```
+
+#### **Integration Tests**
+  ```bash
+  docker-compose up -d mongo
+  go test ./tests/integration -v
+  ```
+
+#### **End-to-End (E2E) Tests**
+```bash
+docker-compose -f docker-compose.test.yml up --abort-on-container-exit
+```
+---

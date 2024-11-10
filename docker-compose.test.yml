@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:latest
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  skillcode-backend:
+    image: tehilathestudent/skillcode-backend:latest
+    depends_on:
+      - mongo
+    environment:
+      - MONGO_URI=mongodb://mongo:27017
+      - MONGO_DB=test_database
+    ports:
+      - "8080:8080"
+
+  tests:
+    build:
+      context: .
+      dockerfile: Dockerfile.tests
+    depends_on:
+      - skillcode-backend
+    environment:
+      - APP_URL=http://skillcode-backend:8080
+    command: >
+      sh -c "
+      while ! nc -z skillcode-backend 8080; do
+        echo 'Waiting for backend...';
+        sleep 1;
+      done;
+      go test ./tests/e2e -v
+      "
+volumes:
+  mongo-data:
