@@ -1,4 +1,4 @@
-package customerrors
+package utils
 
 import "fmt"
 

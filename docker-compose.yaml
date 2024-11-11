@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   mongo:
@@ -19,6 +19,7 @@ services:
     environment:
       - MONGO_URI=mongodb://mongo:27017
       - MONGO_DB=skillcode_db
-
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock # Mount Docker daemon socket for Kind
 volumes:
   mongo-data:

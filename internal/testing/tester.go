@@ -5,110 +5,191 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/model"
+	"github.com/TehilaTheStudent/SkillCode-backend/internal/utils"
 )
 
 // executeFunction is a placeholder for the logic to execute a user's function with test cases.
 // This function should be implemented in a real environment with sandboxing.
 func TestUserSolution(question *model.Question, userFunction string, language string) (string, error) {
-	tester := NewTester("user-solution:latest")
+	tester := NewTester()
+	// Ensure cleanup always happens, no matter where the function exits
+	imageName := "user-solution:latest"
+	dockerFilePath := "./assets/Dockerfile.python"
+	podFilePath := "./assets/solution_pod.yaml"
+	podName := "solution-pod"
+	defer func() {
+		if err := tester.CleanUp(podName, imageName); err != nil {
+			fmt.Printf("Cleanup failed: %v\n", err)
+		}
+	}()
 
-	// Step 1: Generate main file
-	if err := tester.GenerateMainFile(userFunction, question.FunctionSignature, question.TestCases); err != nil {
-		return "", fmt.Errorf("failed to generate main file: %w", err)
+	if err := tester.EnsureKubectlInstalled(); err != nil {
+		return "", fmt.Errorf("kubectl check failed: %w", err)
 	}
 
-	// Step 2: Build Docker image
-	if err := tester.BuildDockerImage(); err != nil {
+	// Step 1: Check if the language is supported
+	// var functionSignature string
+	// found := false
+	// for _, langConfig := range question.Languages {
+	// 	if langConfig.Language == language {
+	// 		functionSignature = langConfig.FunctionSignature
+	// 		found = true
+	// 		break
+	// 	}
+	// }
+	// if !found {
+	// 	return "", utils.New(404, "language "+language+" not supported")
+	// }
+
+	// if err := generatePythonScript("./temp/python/main.py", userFunction, functionSignature, question.TestCases); err != nil {
+	// 	return "", utils.New(500, "failed to generate main file: "+err.Error())
+	// }
+
+	if err := tester.EnsureClusterExists("my-cluster"); err != nil {
+		return "", fmt.Errorf("failed to create Kind cluster: %w", err)
+	}
+
+	//  Build Docker image
+	if err := tester.BuildDockerImage(imageName, dockerFilePath); err != nil {
 		return "", fmt.Errorf("failed to build Docker image: %w", err)
 	}
-
-	// Step 3: Deploy Pod
-	podName := "solution-pod" // Make dynamic if needed
-	if err := tester.DeployPod(podName); err != nil {
-		return "", fmt.Errorf("failed to deploy pod: %w", err)
+	//  Load Docker image into Kind
+	if err := tester.LoadImageIntoKind(imageName, "my-cluster"); err != nil {
+		return "", fmt.Errorf("failed to load image: %w", err)
 	}
-	defer tester.CleanUp(podName) // Ensure cleanup happens
+	//  Set kubectl context
+	if err := tester.EnsureKindContext("my-cluster"); err != nil {
+		return "", fmt.Errorf("failed to set kubectl context: %w", err)
+	}
 
-	// Step 4: Get logs
+	//  Deploy the pod
+	if err := tester.DeployPod(podName, podFilePath); err != nil {
+		return "", utils.New(500, "failed to deploy pod: "+err.Error())
+	}
+
+	//  Retrieve pod logs
 	logs, err := tester.GetPodLogs(podName)
 	if err != nil {
-		return "", fmt.Errorf("failed to retrieve pod logs: %w", err)
+		return "", utils.New(500, "failed to get pod logs: "+err.Error())
 	}
+	// Save logs to a file
+	// if err := tester.SavePodLogs(podName, "./temp/python/logs.txt"); err != nil {
+	// 	return "", utils.New(500, "failed to save pod logs: "+err.Error())
+	// }
 
+	//  Clean up resources
+	if err = tester.CleanUp(podName, imageName); err != nil {
+		return "", utils.New(500, "failed to clean up resources: "+err.Error())
+	}
 	return logs, nil
 }
 
 type Tester struct {
-	ImageName string
+	// add here
 }
 
-func NewTester(imageName string) *Tester {
-	return &Tester{ImageName: imageName}
+func (t *Tester) EnsureKubectlInstalled() error {
+	cmd := exec.Command("kubectl", "version", "--client")
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Stderr = &out
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("kubectl not installed or misconfigured: %v\nOutput: %s", err, out.String())
+	}
+	return nil
 }
-func (t *Tester) GenerateMainFile(userFunction string, functionSignature string, testCases []model.TestCase) error {
-	mainTemplate := `
-		package main
 
-		import "fmt"
+// DeployPod creates a pod to test the solution
+func (t *Tester) DeployPod(podName string, podPath string) error {
+	cmd := exec.Command("kubectl", "apply", "-f", podPath)
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Stderr = &out
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to deploy pod: %v\nOutput: %s", err, out.String())
+	}
+	return nil
+}
 
-		%s // User's function
-
-		func main() {
-			tests := []struct {
-				input    string
-				expected string
-			}{
-				%s
-			}
-
-			for i, test := range tests {
-				// Deserialize input, call user function, validate output
-				_=test
-				fmt.Printf("Test %%d: %%v\\n", i+1, "passed")
-			}
+func (t *Tester) EnsureClusterExists(clusterName string) error {
+	cmd := exec.Command("kind", "get", "clusters")
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Stderr = &out
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to get Kind clusters: %v\nOutput: %s", err, out.String())
+	}
+	clusters := strings.Split(out.String(), "\n")
+	for _, cluster := range clusters {
+		if cluster == clusterName {
+			return nil // Cluster exists
 		}
-	`
-
-	// Serialize test cases
-	var testCasesCode string
-	for _, testCase := range testCases {
-		testCasesCode += fmt.Sprintf(`{input: %q, expected: %q},`, testCase.Input, testCase.ExpectedOutput)
 	}
-
-	// Generate the final code
-	mainCode := fmt.Sprintf(mainTemplate, userFunction, testCasesCode)
-
-	// Define the file path
-	filePath := "./temp/solution.go"
-
-	// Ensure the directory exists
-	if err := os.MkdirAll(filepath.Dir(filePath), 0755); err != nil {
-		return fmt.Errorf("failed to create directory: %w", err)
+	// Create the cluster if it doesn't exist
+	cmd = exec.Command("kind", "create", "cluster", "--name", clusterName)
+	cmd.Stdout = &out
+	cmd.Stderr = &out
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to create Kind cluster: %v\nOutput: %s", err, out.String())
 	}
+	return nil
+}
 
-	// Write to the file
-	return os.WriteFile(filePath, []byte(mainCode), 0644)
+func (t *Tester) LoadImageIntoKind(imageName, clusterName string) error {
+	cmd := exec.Command("kind", "load", "docker-image", imageName, "--name", clusterName)
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Stderr = &out
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to load image into Kind: %v\nOutput: %s", err, out.String())
+	}
+	return nil
+}
+
+func (t *Tester) EnsureKindContext(clusterName string) error {
+	cmd := exec.Command("kubectl", "config", "use-context", fmt.Sprintf("kind-%s", clusterName))
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Stderr = &out
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to switch kubectl context: %v\nOutput: %s", err, out.String())
+	}
+	return nil
+}
+
+func (t *Tester) DeleteKindCluster(clusterName string) error {
+	cmd := exec.Command("kind", "delete", "cluster", "--name", clusterName)
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Stderr = &out
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to delete Kind cluster: %v\nOutput: %s", err, out.String())
+	}
+	return nil
+}
+
+func (t *Tester) SavePodLogs(podName, logFile string) error {
+	logs, err := t.GetPodLogs(podName)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(logFile, []byte(logs), 0644)
 }
 
 // BuildDockerImage builds a Docker image for the user solution
-func (t *Tester) BuildDockerImage() error {
+func (t *Tester) BuildDockerImage(ImageName string, dockerPath string) error {
 	// Get the absolute path to the project root
 	projectRoot, err := os.Getwd()
 	if err != nil {
 		return fmt.Errorf("failed to get working directory: %v", err)
 	}
-	fmt.Println("Current working directory:", projectRoot)
-
-	// Construct the absolute path to the Dockerfile
-	dockerfilePath := filepath.Join(projectRoot, "assets", "Dockerfile.solution")
 
 	// Use the absolute path in the docker build command
-	cmd := exec.Command("docker", "build", "-t", t.ImageName, "-f", dockerfilePath, ".")
+	cmd := exec.Command("docker", "build", "-t", ImageName, "-f", dockerPath, ".")
 	cmd.Dir = projectRoot // Ensure Docker uses the project root as context
 	var out bytes.Buffer
 	cmd.Stdout = &out
@@ -119,17 +200,8 @@ func (t *Tester) BuildDockerImage() error {
 
 	return nil
 }
-
-// DeployPod creates a pod to test the solution
-func (t *Tester) DeployPod(podName string) error {
-	cmd := exec.Command("kubectl", "apply", "-f", "./assets/solution-pod.yaml")
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	cmd.Stderr = &out
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("failed to deploy pod: %v\nOutput: %s", err, out.String())
-	}
-	return nil
+func NewTester() *Tester {
+	return &Tester{}
 }
 
 func (t *Tester) GetPodLogs(podName string) (string, error) {
@@ -171,19 +243,36 @@ Ready:
 }
 
 // CleanUp removes the pod and other resources
-func (t *Tester) CleanUp(podName string) error {
+func (t *Tester) CleanUp(podName string, imageName string) error {
 	var errors []string
 
-	// Delete the pod
-	if err := exec.Command("kubectl", "delete", "pod", podName).Run(); err != nil {
-		errors = append(errors, fmt.Sprintf("Failed to delete pod %s: %v", podName, err))
+	// Step 1: Delete the pod
+	cmd := exec.Command("kubectl", "delete", "pod", podName, "--ignore-not-found")
+	var podOut bytes.Buffer
+	cmd.Stdout = &podOut
+	cmd.Stderr = &podOut
+	if err := cmd.Run(); err != nil {
+		errors = append(errors, fmt.Sprintf("Failed to delete pod %s: %v\nOutput: %s", podName, err, podOut.String()))
 	}
 
-	// Remove the Docker image
-	if err := exec.Command("docker", "rmi", t.ImageName).Run(); err != nil {
-		errors = append(errors, fmt.Sprintf("Failed to remove Docker image %s: %v", t.ImageName, err))
+	// Step 2: Remove the Docker image
+	cmd = exec.Command("docker", "rmi", imageName)
+	var imageOut bytes.Buffer
+	cmd.Stdout = &imageOut
+	cmd.Stderr = &imageOut
+	if err := cmd.Run(); err != nil && !strings.Contains(imageOut.String(), "No such image") {
+		errors = append(errors, fmt.Sprintf("Failed to remove Docker image %s: %v\nOutput: %s", imageName, err, imageOut.String()))
 	}
 
+	// Step 3: Delete temporary log files
+	// logFile := "./temp/python/logs.txt"
+	// if _, err := os.Stat(logFile); err == nil {
+	// 	if err := os.Remove(logFile); err != nil {
+	// 		errors = append(errors, fmt.Sprintf("Failed to remove log file %s: %v", logFile, err))
+	// 	}
+	// }
+
+	// Step 4: Check if there are any accumulated errors
 	if len(errors) > 0 {
 		return fmt.Errorf(strings.Join(errors, "; "))
 	}

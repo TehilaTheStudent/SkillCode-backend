@@ -1,28 +1,21 @@
 package main
 
 import (
+	"github.com/TehilaTheStudent/SkillCode-backend/internal/config"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/db"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/handlers"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/repository"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/service"
 	"github.com/gin-gonic/gin"
-	"os"
 )
 
 func main() {
 	// MongoDB connection
-	mongoURI := os.Getenv("MONGO_URI")
-	if mongoURI == "" {
-		mongoURI = "mongodb://localhost:27017" // Default MongoDB URI
-	}
-	dbName := os.Getenv("MONGO_DB")
-	if dbName == "" {
-		dbName = "skillcode_db" // fallback if MONGO_DB is not set
-	}
-	db.ConnectMongoDB(mongoURI) //initialize MongoDB client
+	cfg := config.LoadConfig() // Load the configuration
+	db.ConnectMongoDB(cfg.MongoURI) //initialize MongoDB client
 
 	// Initialize the repository and service
-	questionRepo := repository.NewQuestionRepository(db.Client.Database(dbName))
+	questionRepo := repository.NewQuestionRepository(db.Client.Database(cfg.DBName))
 	questionService := service.NewQuestionService(questionRepo)
 
 	// Create a handler with the service instance

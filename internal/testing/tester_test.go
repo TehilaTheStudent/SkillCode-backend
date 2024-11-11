@@ -1,51 +1,33 @@
 package tester_test
 
 import (
-	"fmt"
 	"os"
 	"testing"
-
-	"github.com/TehilaTheStudent/SkillCode-backend/internal/model"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/testing"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"github.com/TehilaTheStudent/SkillCode-backend/internal/utils"
 )
 
 func TestTester(t *testing.T) {
-	// Step 1: Create the Question
-	question := model.Question{
-		ID:          primitive.NewObjectID(),
-		Title:       "Merge Two Sorted Arrays",
-		Description: "Merge two sorted arrays in-place.",
-		TestCases: []model.TestCase{
-			{Input: "[[1,2,3,0,0,0],3,[2,5,6],3]", ExpectedOutput: "[1,2,2,3,5,6]"},
-			{Input: "[[0],0,[1],1]", ExpectedOutput: "[1]"},
-		},
-		FunctionSignature: "func merge(nums1 []int, m int, nums2 []int, n int)",
-	}
 
-	// Step 2: Define User Function
-	userFunction := `func merge(nums1 []int, m int, nums2 []int, n int) {
-		copy(nums1[m:], nums2[:n])
-		copy(nums1[:], nums1[:m+n])
-	}`
+	// Step 1: Define the Question with Function Signatures for Multiple Languages
+	question := utils.GenerateQuestion(nil)
 
-	// Step 3: Specify Language
-	language := "golang"
+	// Step 2: Define the User Function (Body Only)
+	// For Python, the user provides only the function body (no class or method signature)
+	userFunctionPython := utils.GenerateUserFunction("python", nil)
 
-	// Step 4: Call TestUserSolution
-	results, err := tester.TestUserSolution(&question, userFunction, language)
+	// Step 5: Call TestUserSolution (Generate and Run Test Harness)
+	results, err := tester.TestUserSolution(&question, userFunctionPython.Function, userFunctionPython.Language)
 	if err != nil {
 		t.Fatalf("TestUserSolution failed: %v", err)
 	}
 
+	// Step 6: Log the Results
+	// fmt.Println("Test results:\n" + results)
 	t.Logf("Test results:\n%s", results)
 }
 
 func TestMain(m *testing.M) {
-	// Change working directory to the project root
-	if err := os.Chdir("../.."); err != nil {
-		fmt.Printf("Failed to change working directory: %v\n", err)
-		os.Exit(1)
-	}
+	utils.EnsureWorkingDirectory()
 	os.Exit(m.Run())
 }

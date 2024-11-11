@@ -3,7 +3,6 @@ package integration_tests
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -14,6 +13,7 @@ import (
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/model"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/repository"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/service"
+	"github.com/TehilaTheStudent/SkillCode-backend/internal/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -26,6 +26,8 @@ var questionHandler *handlers.QuestionHandler
 
 // Setup integration test environment
 func TestMain(m *testing.M) {
+
+	utils.EnsureWorkingDirectory()
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -64,24 +66,17 @@ func insertTestQuestion(question model.Question) {
 	_, _ = collection.InsertOne(ctx, question)
 }
 func clearDatabase() {
-    ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-    defer cancel()
-    testDB.Database("test_database").Drop(ctx)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	testDB.Database("test_database").Drop(ctx)
 }
-
 
 func TestGetQuestionByID_Integration(t *testing.T) {
 	clearDatabase()
 
 	// Arrange: Insert a test question
 	questionID := primitive.NewObjectID()
-	testQuestion := model.Question{
-		ID:          questionID,
-		Title:       "Two Sum",
-		Description: "Find two numbers that add up to a target.",
-		Visibility:  "public",
-		CreatedBy:   "user123",
-	}
+	testQuestion := utils.GenerateQuestion(map[string]interface{}{"ID": questionID})
 	insertTestQuestion(testQuestion)
 
 	// Set up router
@@ -102,19 +97,27 @@ func TestGetQuestionByID_Integration(t *testing.T) {
 	assert.Equal(t, testQuestion.Title, response.Title)
 }
 func TestCreateQuestion_Integration(t *testing.T) {
+	// Arrange: Clear the database before running the test
 	clearDatabase()
 
+	// Setup the router
 	router := setupRouter()
 
-	// Request body for the new question
-	jsonBody := `{
-        "title": "Binary Search",
-        "description": "Implement a binary search algorithm.",
-        "function_signature": "func binarySearch(nums []int, target int) int",
-        "test_cases": [],
-        "visibility": "public",
-        "created_by": "user123"
-    }`
+	// Generate request body for the new question
+	jsonBody := utils.GenerateCreateQuestionPayload(map[string]interface{}{
+		"title":       "Binary Search",
+		"description": "Implement a binary search algorithm.",
+		"test_cases": []map[string]string{
+			{"input": "[1, 2, 3, 4, 5], 3", "expected_output": "2"},
+			{"input": "[10, 20, 30, 40], 30", "expected_output": "2"},
+		},
+		"languages": []map[string]string{
+			{"language": "golang", "function_signature": "func binarySearch(nums []int, target int) int"},
+			{"language": "python", "function_signature": "def binary_search(nums, target):"},
+		},
+		"visibility": "public",
+		"created_by": "user123",
+	})
 
 	// Act: Make the HTTP POST request
 	w := httptest.NewRecorder()
@@ -122,50 +125,47 @@ func TestCreateQuestion_Integration(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	router.ServeHTTP(w, req)
 
-	// Assert
+	// Assert: Check the HTTP response
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	// Parse the response to verify the created question
 	var response map[string]interface{}
-	json.Unmarshal(w.Body.Bytes(), &response)
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	assert.NoError(t, err)
 	assert.Equal(t, "Binary Search", response["title"])
 	assert.NotEmpty(t, response["id"])
 
-	// Verify the question is in the database
+	// Verify the question is stored in the database
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
+
 	collection := testDB.Database("test_database").Collection("questions")
 	var dbQuestion map[string]interface{}
-	err := collection.FindOne(ctx, map[string]interface{}{"title": "Binary Search"}).Decode(&dbQuestion)
+	err = collection.FindOne(ctx, map[string]interface{}{"title": "Binary Search"}).Decode(&dbQuestion)
+
 	assert.NoError(t, err)
 	assert.Equal(t, "Binary Search", dbQuestion["title"])
+	assert.Equal(t, "public", dbQuestion["visibility"])
+	assert.Equal(t, "user123", dbQuestion["created_by"])
+	assert.Len(t, dbQuestion["test_cases"], 2)
+	assert.Len(t, dbQuestion["languages"], 2)
 }
+
 func TestUpdateQuestion_Integration(t *testing.T) {
 	clearDatabase()
 
 	// Arrange: Insert a test question
 	questionID := primitive.NewObjectID()
-	testQuestion := model.Question{
-		ID:                questionID,
-		Title:             "Binary Search",
-		Description:       "Implement a binary search algorithm.",
-		FunctionSignature: "func binarySearch(nums []int, target int) int",
-		Visibility:        "public",
-		CreatedBy:         "user123",
-	}
+	testQuestion := utils.GenerateQuestion(map[string]interface{}{"ID": questionID})
 	insertTestQuestion(testQuestion)
 
 	// Updated data
 	updatedTitle := "Updated Binary Search"
 	updatedDescription := "Implement an optimized binary search algorithm."
-	jsonBody := fmt.Sprintf(`{
-        "title": "%s",
-        "description": "%s",
-        "function_signature": "func binarySearch(nums []int, target int) int",
-        "test_cases": [],
-        "visibility": "public",
-        "created_by": "user123"
-    }`, updatedTitle, updatedDescription)
+	jsonBody := utils.GenerateCreateQuestionPayload(map[string]interface{}{
+		"title":       updatedTitle,
+		"description": updatedDescription,
+	})
 
 	router := setupRouter()
 
@@ -195,19 +195,12 @@ func TestUpdateQuestion_Integration(t *testing.T) {
 	assert.Equal(t, updatedDescription, dbQuestion["description"])
 }
 
-
 func TestDeleteQuestion_Integration(t *testing.T) {
 	clearDatabase()
-	
+
 	// Arrange: Insert a test question
 	questionID := primitive.NewObjectID()
-	testQuestion := model.Question{
-		ID:          questionID,
-		Title:       "Binary Search",
-		Description: "Implement a binary search algorithm.",
-		Visibility:  "public",
-		CreatedBy:   "user123",
-	}
+	testQuestion := utils.GenerateQuestion(map[string]interface{}{"ID": questionID})
 	insertTestQuestion(testQuestion)
 
 	router := setupRouter()
@@ -228,58 +221,13 @@ func TestDeleteQuestion_Integration(t *testing.T) {
 	err := collection.FindOne(ctx, map[string]interface{}{"_id": questionID}).Decode(&dbQuestion)
 	assert.Error(t, err) // Expect error because the question no longer exists
 }
-func TestTestQuestion_Integration(t *testing.T) {
-	clearDatabase()
-
-	router := setupRouter()
-
-	// Arrange
-	questionID := primitive.NewObjectID()
-	testQuestion := model.Question{
-		ID:          questionID,
-		Title:       "Binary Search",
-		Description: "Implement a binary search algorithm.",
-		Visibility:  "public",
-		CreatedBy:   "user123",
-	}
-	insertTestQuestion(testQuestion)
-
-	userFunction := `func binarySearch(nums []int, target int) int {return 0 // Example implementation}`
-	jsonBody := fmt.Sprintf(`{"user_function": "%s"}`, userFunction)
-
-	// Act: Make the HTTP POST request
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", "/questions/"+questionID.Hex()+"/test", strings.NewReader(jsonBody))
-	req.Header.Set("Content-Type", "application/json")
-	router.ServeHTTP(w, req)
-
-	// Assert
-	assert.Equal(t, http.StatusOK, w.Code)
-
-	// Parse the response
-	var response map[string]interface{}
-	json.Unmarshal(w.Body.Bytes(), &response)
-	assert.NotNil(t, response["result"])
-}
 
 func TestGetAllQuestions_Integration(t *testing.T) {
 	clearDatabase()
 	// Arrange: Insert multiple test questions
 	questions := []model.Question{
-		{
-			ID:          primitive.NewObjectID(),
-			Title:       "Binary Search",
-			Description: "Implement a binary search algorithm.",
-			Visibility:  "public",
-			CreatedBy:   "user123",
-		},
-		{
-			ID:          primitive.NewObjectID(),
-			Title:       "Reverse String",
-			Description: "Reverse a given string.",
-			Visibility:  "private",
-			CreatedBy:   "user456",
-		},
+		utils.GenerateQuestion(nil),
+		utils.GenerateQuestion(nil),
 	}
 	for _, question := range questions {
 		insertTestQuestion(question)

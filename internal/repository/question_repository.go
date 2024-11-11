@@ -2,12 +2,13 @@ package repository
 
 import (
 	"context"
+	"time"
+
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/model"
-	"github.com/TehilaTheStudent/SkillCode-backend/utils"
+	"github.com/TehilaTheStudent/SkillCode-backend/internal/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"time"
 )
 
 // Define the interface for basic CRUD operations
@@ -56,7 +57,7 @@ func (r *QuestionRepository) GetQuestionByID(id primitive.ObjectID) (*model.Ques
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			// Return the custom "not found" error
-			return nil, customerrors.New(404, "Question not found for ID: "+id.Hex())
+			return nil, utils.New(404, "Question not found for ID: "+id.Hex())
 		}
 		// Return other errors as-is
 		return nil, err
@@ -86,12 +87,12 @@ func (r *QuestionRepository) UpdateQuestion(id primitive.ObjectID, question mode
 	question.UpdatedAt = time.Now()
 	updateResult, err := r.collection.UpdateOne(context.Background(), bson.M{"_id": id}, bson.M{"$set": question})
 	if err != nil {
-		return false, customerrors.ErrInternal
+		return false, utils.ErrInternal
 	}
 
 	// Check if no document was matched
 	if updateResult.MatchedCount == 0 {
-		return false, customerrors.New(404, "Question not found with ID: "+id.Hex())
+		return false, utils.New(404, "Question not found with ID: "+id.Hex())
 	}
 
 	return true, nil
@@ -100,12 +101,12 @@ func (r *QuestionRepository) UpdateQuestion(id primitive.ObjectID, question mode
 func (r *QuestionRepository) DeleteQuestion(id primitive.ObjectID) (bool, error) {
 	deleteResult, err := r.collection.DeleteOne(context.Background(), bson.M{"_id": id})
 	if err != nil {
-		return false, customerrors.ErrInternal
+		return false, utils.ErrInternal
 	}
 
 	// Check if no document was deleted
 	if deleteResult.DeletedCount == 0 {
-		return false, customerrors.New(404, "Question not found with ID: "+id.Hex())
+		return false, utils.New(404, "Question not found with ID: "+id.Hex())
 	}
 
 	return true, nil

@@ -6,7 +6,7 @@ import (
 
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/model"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/service"
-	"github.com/TehilaTheStudent/SkillCode-backend/utils"
+	"github.com/TehilaTheStudent/SkillCode-backend/internal/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
 )
@@ -119,7 +119,7 @@ func (h *QuestionHandler) TestQuestion(c *gin.Context) {
 
 func HandleError(c *gin.Context, err error) {
 	fmt.Println(err)
-	if customErr, ok := err.(*customerrors.CustomError); ok {
+	if customErr, ok := err.(*utils.CustomError); ok {
 		c.JSON(customErr.Code, gin.H{"error": customErr.Message})
 	} else {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})

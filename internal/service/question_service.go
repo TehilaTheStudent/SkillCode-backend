@@ -3,8 +3,8 @@ package service
 import (
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/model"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/repository"
-	"github.com/TehilaTheStudent/SkillCode-backend/internal/testing"
-	"github.com/TehilaTheStudent/SkillCode-backend/utils"
+	tester "github.com/TehilaTheStudent/SkillCode-backend/internal/testing"
+	"github.com/TehilaTheStudent/SkillCode-backend/internal/utils"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -38,7 +38,7 @@ func (s *QuestionService) CreateQuestion(question model.Question) (*model.Questi
 func (s *QuestionService) GetQuestionByID(id string) (*model.Question, error) {
 	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return nil, customerrors.New(400, "Invalid ID: "+id)
+		return nil, utils.New(400, "Invalid ID: "+id)
 	}
 	return s.Repo.GetQuestionByID(objID)
 }
@@ -50,7 +50,7 @@ func (s *QuestionService) GetAllQuestions() ([]model.Question, error) {
 func (s *QuestionService) UpdateQuestion(id string, question model.Question) (*model.Question, error) {
 	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return nil, customerrors.New(400, "Invalid ID: "+id)
+		return nil, utils.New(400, "Invalid ID: "+id)
 	}
 	_, err = s.Repo.UpdateQuestion(objID, question)
 	if err != nil {
@@ -63,7 +63,7 @@ func (s *QuestionService) UpdateQuestion(id string, question model.Question) (*m
 func (s *QuestionService) DeleteQuestion(id string) error {
 	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return customerrors.New(400, "Invalid ID: "+id)
+		return utils.New(400, "Invalid ID: "+id)
 	}
 
 	_, err = s.Repo.DeleteQuestion(objID)
@@ -74,14 +74,14 @@ func (s *QuestionService) DeleteQuestion(id string) error {
 func (s *QuestionService) TestQuestion(questionId string, solution model.Solution) (string, error) {
 	objID, err := primitive.ObjectIDFromHex(questionId)
 	if err != nil {
-		return "", customerrors.New(400, "Invalid ID: "+questionId)
+		return "", utils.New(400, "Invalid ID: "+questionId)
 	}
 	question, err := s.Repo.GetQuestionByID(objID)
 	if err != nil {
-		return "", customerrors.New(404, "Question not found with ID: "+questionId)
+		return "", utils.New(404, "Question not found with ID: "+questionId)
 	}
 
-	output, err := tester.TestUserSolution(question, solution.Function, solution.Languange)
+	output, err := tester.TestUserSolution(question, solution.Function, solution.Language)
 	if err != nil {
 		return "", err
 	}

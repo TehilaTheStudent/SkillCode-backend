@@ -3,10 +3,12 @@ package e2e
 import (
 	"bytes"
 	"encoding/json"
+	"log"
 	"net/http"
 	"os"
 	"testing"
-    "log"
+
+	"github.com/TehilaTheStudent/SkillCode-backend/internal/utils"
 	"github.com/joho/godotenv"
 
 	"github.com/stretchr/testify/assert"
@@ -15,14 +17,14 @@ import (
 var baseURL string
 
 func TestMain(m *testing.M) {
-	
+	utils.EnsureWorkingDirectory()
 	// Load environment variables
 	baseURL = os.Getenv("APP_URL")
 	if baseURL == "" {
-		if err := godotenv.Load(".env.e2e"); err != nil {
+		if err := godotenv.Load("tests/e2e/.env.e2e"); err != nil {
 			log.Fatalf("Error loading .env.e2e file: %v", err)
 		}
-	
+
 		// Print loaded environment variables (optional for debugging)
 		log.Printf("Loaded environment: APP_URL=%s", os.Getenv("APP_URL"))
 		baseURL = os.Getenv("APP_URL")
@@ -37,14 +39,10 @@ func TestMain(m *testing.M) {
 
 func TestCreateRetrieveUpdateDeleteQuestion(t *testing.T) {
 	// Step 1: Create a new question
-	createBody := map[string]interface{}{
-		"title":              "Merge Sort",
-		"description":        "Implement merge sort algorithm",
-		"function_signature": "func mergeSort(nums []int) []int",
-		"test_cases":         []interface{}{},
-		"visibility":         "public",
-		"created_by":         "user123",
-	}
+	createBody := utils.GenerateCreateQuestionPayload(map[string]interface{}{
+		"title":      "Merge Sort",
+		"visibility": "public",
+	})
 	createResp, createID := createQuestion(t, createBody)
 	assert.Equal(t, http.StatusOK, createResp.StatusCode)
 	assert.NotEmpty(t, createID)
@@ -58,12 +56,10 @@ func TestCreateRetrieveUpdateDeleteQuestion(t *testing.T) {
 	assert.Equal(t, "Merge Sort", retrievedQuestion["title"])
 
 	// Step 3: Update the question
-	updateBody := map[string]interface{}{
-		"title":              "Updated Merge Sort",
-		"description":        "Updated description for merge sort",
-		"function_signature": "func mergeSort(nums []int) []int",
-		"visibility":         "private",
-	}
+	updateBody := utils.GenerateCreateQuestionPayload(map[string]interface{}{
+		"title":      "Updated Merge Sort",
+		"visibility": "private",
+	})
 	updateResp := updateQuestion(t, createID, updateBody)
 	assert.Equal(t, http.StatusOK, updateResp.StatusCode)
 
@@ -87,9 +83,7 @@ func TestCreateRetrieveUpdateDeleteQuestion(t *testing.T) {
 
 func TestErrorHandlingOnInvalidInput(t *testing.T) {
 	// Step 1: Test creating a question with missing required fields
-	invalidCreateBody := map[string]interface{}{
-		"title": "Invalid Question",
-	}
+	invalidCreateBody := "{\"title\": \"Invalid Question\"}"
 	createResp, _ := createQuestion(t, invalidCreateBody)
 	assert.Equal(t, http.StatusBadRequest, createResp.StatusCode)
 
@@ -99,9 +93,7 @@ func TestErrorHandlingOnInvalidInput(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, retrieveResp.StatusCode)
 
 	// Step 3: Test updating a non-existent question
-	updateBody := map[string]interface{}{
-		"title": "Should Not Exist",
-	}
+	updateBody := utils.GenerateCreateQuestionPayload(nil)
 	updateResp := updateQuestion(t, nonExistentID, updateBody)
 	assert.Equal(t, http.StatusNotFound, updateResp.StatusCode)
 
@@ -110,24 +102,26 @@ func TestErrorHandlingOnInvalidInput(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, deleteResp.StatusCode)
 }
 
-func createQuestion(t *testing.T, body map[string]interface{}) (*http.Response, string) {
+func createQuestion(t *testing.T, body string) (*http.Response, string) {
 	client := &http.Client{}
-	jsonData, _ := json.Marshal(body)
 
-	req, err := http.NewRequest("POST", baseURL+"/questions", bytes.NewBuffer(jsonData))
+	// Use body directly as it's already a JSON string
+	req, err := http.NewRequest("POST", baseURL+"/questions", bytes.NewBuffer([]byte(body)))
 	assert.NoError(t, err)
 	req.Header.Set("Content-Type", "application/json")
 
+	// Execute the request
 	resp, err := client.Do(req)
 	assert.NoError(t, err)
+	defer resp.Body.Close() // Ensure the response body is closed
 
+	// Decode the response
 	var response map[string]interface{}
-	json.NewDecoder(resp.Body).Decode(&response)
+	err = json.NewDecoder(resp.Body).Decode(&response)
+	assert.NoError(t, err)
 
-	id := ""
-	if resp.StatusCode == http.StatusOK {
-		id = response["id"].(string)
-	}
+	// Extract the ID safely
+	id, _ := response["id"].(string)
 
 	return resp, id
 }
@@ -142,14 +136,15 @@ func getQuestionByID(t *testing.T, id string) *http.Response {
 	return resp
 }
 
-func updateQuestion(t *testing.T, id string, body map[string]interface{}) *http.Response {
+func updateQuestion(t *testing.T, id string, body string) *http.Response {
 	client := &http.Client{}
-	jsonData, _ := json.Marshal(body)
 
-	req, err := http.NewRequest("PUT", baseURL+"/questions/"+id, bytes.NewBuffer(jsonData))
+	// Use the JSON string directly as the request body
+	req, err := http.NewRequest("PUT", baseURL+"/questions/"+id, bytes.NewBuffer([]byte(body)))
 	assert.NoError(t, err)
 	req.Header.Set("Content-Type", "application/json")
 
+	// Send the request
 	resp, err := client.Do(req)
 	assert.NoError(t, err)
 	return resp

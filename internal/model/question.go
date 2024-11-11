@@ -6,8 +6,8 @@ import (
 )
 
 type TestCase struct {
-	Input          interface{} `bson:"input" json:"input" validate:"required"`
-	ExpectedOutput interface{} `bson:"expected_output" json:"expected_output" validate:"required"`
+	Input          string `bson:"input" json:"input" validate:"required"`
+	ExpectedOutput string `bson:"expected_output" json:"expected_output" validate:"required"`
 }
 
 // LanguageConfig holds the function signature for a specific language
@@ -17,14 +17,13 @@ type LanguageConfig struct {
 }
 
 type Solution struct {
-	Languange string `json:"languange"`
+	Language string `json:"language"`
 	Function  string `json:"user_function"`
 }
 type Question struct {
 	ID                primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
 	Title             string             `bson:"title" json:"title" validate:"required"`
 	Description       string             `bson:"description" json:"description" validate:"required"`
-	FunctionSignature string             `bson:"function_signature" json:"function_signature" validate:"required"`
 	TestCases         []TestCase         `bson:"test_cases" json:"test_cases" validate:"omitempty,dive"` // Optional but validates nested TestCases
 	Languages         []LanguageConfig   `bson:"languages" json:"languages" validate:"required,dive"`    // Language-specific configurations
 	Visibility        string             `bson:"visibility" json:"visibility" validate:"required,oneof=public private"`

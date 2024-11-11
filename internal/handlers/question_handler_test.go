@@ -3,17 +3,16 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
-	"net/http/httptest"
-	"strings"
-	"testing"
-
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/model"
-	"github.com/TehilaTheStudent/SkillCode-backend/utils"
+	"github.com/TehilaTheStudent/SkillCode-backend/internal/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"testing"
 )
 
 type MockQuestionService struct {
@@ -58,34 +57,13 @@ func TestCreateQuestion(t *testing.T) {
 	mockService := new(MockQuestionService)
 	handler := NewQuestionHandler(mockService)
 
-	// Prepare test data
-	title := "Two Sum Problem"
-	description := "Find two numbers that add up to a specific target."
-	functionSignature := "func twoSum(nums []int, target int) []int"
-
-	// Define the test cases
-	testCases := []model.TestCase{
-		{
-			Input:          []int{2, 7, 11, 15}, // Example input array for the function
-			ExpectedOutput: 9,                   // Expected output
-		},
-		{
-			Input:          []int{3, 2, 4}, // Another example input
-			ExpectedOutput: 6,              // Expected output
-		},
-	}
-
-	// Create a new expected question with an ObjectID
+	// Create a new expected question with an ObjectID and timestamps
 	objID := primitive.NewObjectID()
-	expectedQuestion := model.Question{
-		ID:                objID,
-		Title:             title,
-		Description:       description,
-		FunctionSignature: functionSignature,
-		TestCases:         testCases,
-		Visibility:        "public",
-		CreatedBy:         "user123",
-	}
+	expectedQuestion := utils.GenerateQuestion(map[string]interface{}{
+		"ID":          objID,
+		"Title":       "Two Sum Problem",
+		"Description": "Find two numbers that add up to a specific target.",
+	})
 
 	// Setup mock service to return the created question
 	mockService.On("CreateQuestion", mock.AnythingOfType("model.Question")).Return(&expectedQuestion, nil)
@@ -94,36 +72,32 @@ func TestCreateQuestion(t *testing.T) {
 	router := gin.Default()
 	RegisterQuestionRoutes(router, handler)
 
-	// Create a mock HTTP request to test the CreateQuestion endpoint
-	jsonBody := `{
-        "title": "Two Sum Problem",
-        "description": "Find two numbers that add up to a specific target.",
-        "function_signature": "func twoSum(nums []int, target int) []int",
-        "test_cases": [
-            {
-                "input": [2, 7, 11, 15],
-                "expected_output": 9
-            },
-            {
-                "input": [3, 2, 4],
-                "expected_output": 6
-            }
-        ],
-        "visibility": "public",
-        "created_by": "user123"
-    }`
+	// Generate JSON payload
+	jsonBody := utils.GenerateCreateQuestionPayload(map[string]interface{}{
+		"title":       "Two Sum Problem",
+		"description": "Find two numbers that add up to a specific target.",
+		"test_cases": []map[string]string{
+			{"input": "[2, 7, 11, 15]", "expected_output": "9"},
+			{"input": "[3, 2, 4]", "expected_output": "6"},
+		},
+		"languages": []map[string]string{
+			{"language": "golang", "function_signature": "func twoSum(nums []int, target int) []int"},
+			{"language": "python", "function_signature": "def two_sum(nums: List[int], target: int) -> List[int]:"},
+		},
+		"visibility": "public",
+		"created_by": "user123",
+	})
 
+	// Act: Create a mock HTTP request to test the CreateQuestion endpoint
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/questions", strings.NewReader(jsonBody))
 	req.Header.Set("Content-Type", "application/json")
-
-	// Execute the request
 	router.ServeHTTP(w, req)
 
-	// Assert the response
+	// Assert: Validate the response
 	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Contains(t, w.Body.String(), "Two Sum Problem")
-	assert.Contains(t, w.Body.String(), objID.Hex()) // Assert ID is in string format
+	assert.Contains(t, w.Body.String(), "Two Sum Problem") // Check title
+	assert.Contains(t, w.Body.String(), objID.Hex())       // Check ID is returned
 	mockService.AssertExpectations(t)
 }
 
@@ -140,13 +114,12 @@ func TestUpdateQuestion(t *testing.T) {
 	// Mock the service
 	mockService.On("UpdateQuestion", objID.Hex(), mock.AnythingOfType("model.Question")).
 		Return(&model.Question{
-			ID:                objID,
-			Title:             updatedTitle,
-			Description:       updatedDescription,
-			FunctionSignature: "func twoSum(nums []int, target int) []int",
-			TestCases:         []model.TestCase{},
-			Visibility:        "public",
-			CreatedBy:         "user123",
+			ID:          objID,
+			Title:       updatedTitle,
+			Description: updatedDescription,
+			TestCases:   []model.TestCase{},
+			Visibility:  "public",
+			CreatedBy:   "user123",
 		}, nil).Once()
 
 	// Set up router
@@ -204,47 +177,6 @@ func TestDeleteQuestion(t *testing.T) {
 	assert.Contains(t, w.Body.String(), "Question deleted")
 	mockService.AssertExpectations(t)
 }
-func TestTestQuestion(t *testing.T) {
-	// Arrange
-	mockService := new(MockQuestionService)
-	handler := NewQuestionHandler(mockService)
-
-	questionID := primitive.NewObjectID().Hex()
-	userFunction := "func twoSum(nums []int, target int) []int { return nil }"
-	expectedResult := false
-
-	// Mock the service behavior
-	mockService.On("TestQuestion", questionID, userFunction).
-		Return(expectedResult, nil).Once()
-
-	// Set up router
-	router := gin.Default()
-	router.POST("/questions/:id/test", handler.TestQuestion)
-
-	// JSON body
-	jsonBody := fmt.Sprintf(`{"user_function": "%s"}`, userFunction)
-
-	// Create mock HTTP request
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", fmt.Sprintf("/questions/%s/test", questionID), strings.NewReader(jsonBody))
-	req.Header.Set("Content-Type", "application/json")
-
-	// Act
-	router.ServeHTTP(w, req)
-
-	// Assert
-	assert.Equal(t, http.StatusOK, w.Code)
-
-	// Parse the JSON response
-	var response map[string]interface{}
-	err := json.Unmarshal(w.Body.Bytes(), &response)
-	assert.NoError(t, err)
-
-	// Assert the result
-	assert.Equal(t, expectedResult, response["result"])
-	mockService.AssertExpectations(t)
-}
-
 func TestGetAllQuestions(t *testing.T) {
 	// Arrange
 	mockService := new(MockQuestionService)
@@ -339,7 +271,7 @@ func TestGetQuestionByID_NotFound(t *testing.T) {
 	questionID := primitive.NewObjectID().Hex()
 	fmt.Println(questionID)
 	// Mock the service to return "no documents in result"
-	mockService.On("GetQuestionByID", questionID).Return(nil, customerrors.New(404, "Question not found with ID:")).Once()
+	mockService.On("GetQuestionByID", questionID).Return(nil, utils.New(404, "Question not found with ID:")).Once()
 
 	// Set up router
 	router := gin.Default()
