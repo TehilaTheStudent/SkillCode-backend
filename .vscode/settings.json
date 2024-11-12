@@ -1,0 +1,7 @@
+{
+    "files.insertFinalNewline": true,
+    "files.trimFinalNewlines": true,
+    "go.toolsEnvVars": {
+        "PROJECT_ROOT": "${workspaceFolder}"
+    }
+}
