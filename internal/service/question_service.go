@@ -27,6 +27,7 @@ func NewQuestionService(repo repository.QuestionRepositoryInterface) *QuestionSe
 	return &QuestionService{Repo: repo}
 }
 
+// CreateQuestion creates a new question in the repository.
 func (s *QuestionService) CreateQuestion(question model.Question) (*model.Question, error) {
 	result, err := s.Repo.CreateQuestion(question)
 	if err != nil {
@@ -35,22 +36,33 @@ func (s *QuestionService) CreateQuestion(question model.Question) (*model.Questi
 	return result, nil
 }
 
-func (s *QuestionService) GetQuestionByID(id string) (*model.Question, error) {
+func handleInvalidID(id string) (primitive.ObjectID, error) {
 	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return nil, utils.New(400, "Invalid ID: "+id)
+		return primitive.NilObjectID, utils.New(400, "Invalid ID: "+id)
+	}
+	return objID, nil
+}
+
+// GetQuestionByID retrieves a question by its ID from the repository.
+func (s *QuestionService) GetQuestionByID(id string) (*model.Question, error) {
+	objID, err := handleInvalidID(id)
+	if err != nil {
+		return nil, err
 	}
 	return s.Repo.GetQuestionByID(objID)
 }
 
+// GetAllQuestions retrieves all questions from the repository.
 func (s *QuestionService) GetAllQuestions() ([]model.Question, error) {
 	return s.Repo.GetAllQuestions()
 }
 
+// UpdateQuestion updates an existing question in the repository.
 func (s *QuestionService) UpdateQuestion(id string, question model.Question) (*model.Question, error) {
-	objID, err := primitive.ObjectIDFromHex(id)
+	objID, err := handleInvalidID(id)
 	if err != nil {
-		return nil, utils.New(400, "Invalid ID: "+id)
+		return nil, err
 	}
 	_, err = s.Repo.UpdateQuestion(objID, question)
 	if err != nil {
@@ -60,21 +72,21 @@ func (s *QuestionService) UpdateQuestion(id string, question model.Question) (*m
 	return &question, nil
 }
 
+// DeleteQuestion deletes a question by its ID from the repository.
 func (s *QuestionService) DeleteQuestion(id string) error {
-	objID, err := primitive.ObjectIDFromHex(id)
+	objID, err := handleInvalidID(id)
 	if err != nil {
-		return utils.New(400, "Invalid ID: "+id)
+		return err
 	}
-
 	_, err = s.Repo.DeleteQuestion(objID)
 	return err
 }
 
 // TestQuestion simulates running a user-provided function against test cases for a question.
 func (s *QuestionService) TestQuestion(questionId string, solution model.Solution) (string, error) {
-	objID, err := primitive.ObjectIDFromHex(questionId)
+	objID, err := handleInvalidID(questionId)
 	if err != nil {
-		return "", utils.New(400, "Invalid ID: "+questionId)
+		return "", err
 	}
 	question, err := s.Repo.GetQuestionByID(objID)
 	if err != nil {

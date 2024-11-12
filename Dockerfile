@@ -9,7 +9,7 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 # Copy the source code
-COPY . .
+COPY . ./
 
 # Build the Go application
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o main ./cmd/main.go
@@ -25,14 +25,24 @@ RUN apk add --no-cache curl bash && \
     curl -Lo /usr/local/bin/kind "https://kind.sigs.k8s.io/dl/latest/kind-linux-amd64" && \
     chmod +x /usr/local/bin/kind
 
-# Copy the Go application from the builder stage
+# Copy the built Go application from the builder stage
 COPY --from=builder /app/main /app/main
+
+
 
 # Set the working directory
 WORKDIR /app
+
+# Copy the assets directory into the container
+COPY ./assets /app/assets
+
+# Set the PROJECT_ROOT environment variable
+ENV PROJECT_ROOT=/app
 
 # Expose port 8080 for the Go server
 EXPOSE 8080
 
 # Command to run the Go server
+# command that will keep the container running
+# CMD ["tail", "-f", "/dev/null"]
 CMD ["./main"]

@@ -9,7 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/TehilaTheStudent/SkillCode-backend/internal/handlers"
+	"github.com/TehilaTheStudent/SkillCode-backend/internal/config"
+	"github.com/TehilaTheStudent/SkillCode-backend/internal/handler"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/model"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/repository"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/service"
@@ -22,40 +23,52 @@ import (
 )
 
 var testDB *mongo.Client
-var questionHandler *handlers.QuestionHandler
+var questionHandler *handler.QuestionHandler
 
 // Setup integration test environment
 func TestMain(m *testing.M) {
-
 	utils.EnsureWorkingDirectory()
+	setupDatabase()
+	defer teardownDatabase()
+	m.Run()
+}
+
+func setupDatabase() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
+	// Load configuration
+	cfg := config.LoadConfig()
+
 	// Connect to MongoDB
 	var err error
-	testDB, err = mongo.Connect(ctx, options.Client().ApplyURI("mongodb://localhost:27017"))
+	testDB, err = mongo.Connect(ctx, options.Client().ApplyURI(cfg.MongoDBURI))
 	if err != nil {
 		panic(err)
 	}
 
-	// Clean up database
-	defer func() {
-		testDB.Database("test_database").Drop(ctx)
-		testDB.Disconnect(ctx)
-	}()
-
 	// Create repository, service, and handler
 	questionRepo := repository.NewQuestionRepository(testDB.Database("test_database"))
 	questionService := service.NewQuestionService(questionRepo)
-	questionHandler = handlers.NewQuestionHandler(questionService)
+	questionHandler = handler.NewQuestionHandler(questionService)
+}
 
-	// Run tests
-	m.Run()
+func teardownDatabase() {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	err := testDB.Database("test_database").Drop(ctx)
+	if err != nil {
+		panic(err)
+	}
+	err = testDB.Disconnect(ctx)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func setupRouter() *gin.Engine {
 	router := gin.Default()
-	handlers.RegisterQuestionRoutes(router, questionHandler)
+	handler.RegisterQuestionRoutes(router, questionHandler)
 	return router
 }
 
@@ -65,10 +78,14 @@ func insertTestQuestion(question model.Question) {
 	collection := testDB.Database("test_database").Collection("questions")
 	_, _ = collection.InsertOne(ctx, question)
 }
+
 func clearDatabase() {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	testDB.Database("test_database").Drop(ctx)
+	err := testDB.Database("test_database").Drop(ctx)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func TestGetQuestionByID_Integration(t *testing.T) {
@@ -92,12 +109,14 @@ func TestGetQuestionByID_Integration(t *testing.T) {
 
 	var response model.Question
 	err := json.Unmarshal(w.Body.Bytes(), &response)
-	assert.NoError(t, err)
+	if err != nil {
+		t.Fatalf("Failed to unmarshal response: %v", err)
+	}
 	assert.Equal(t, testQuestion.ID, response.ID)
 	assert.Equal(t, testQuestion.Title, response.Title)
 }
+
 func TestCreateQuestion_Integration(t *testing.T) {
-	// Arrange: Clear the database before running the test
 	clearDatabase()
 
 	// Setup the router
@@ -131,7 +150,9 @@ func TestCreateQuestion_Integration(t *testing.T) {
 	// Parse the response to verify the created question
 	var response map[string]interface{}
 	err := json.Unmarshal(w.Body.Bytes(), &response)
-	assert.NoError(t, err)
+	if err != nil {
+		t.Fatalf("Failed to unmarshal response: %v", err)
+	}
 	assert.Equal(t, "Binary Search", response["title"])
 	assert.NotEmpty(t, response["id"])
 
@@ -180,7 +201,10 @@ func TestUpdateQuestion_Integration(t *testing.T) {
 
 	// Parse the response
 	var response map[string]interface{}
-	json.Unmarshal(w.Body.Bytes(), &response)
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Fatalf("Failed to unmarshal response: %v", err)
+	}
 	assert.Equal(t, updatedTitle, response["title"])
 	assert.Equal(t, updatedDescription, response["description"])
 
@@ -189,7 +213,7 @@ func TestUpdateQuestion_Integration(t *testing.T) {
 	defer cancel()
 	collection := testDB.Database("test_database").Collection("questions")
 	var dbQuestion map[string]interface{}
-	err := collection.FindOne(ctx, map[string]interface{}{"_id": questionID}).Decode(&dbQuestion)
+	err = collection.FindOne(ctx, map[string]interface{}{"_id": questionID}).Decode(&dbQuestion)
 	assert.NoError(t, err)
 	assert.Equal(t, updatedTitle, dbQuestion["title"])
 	assert.Equal(t, updatedDescription, dbQuestion["description"])
@@ -224,6 +248,7 @@ func TestDeleteQuestion_Integration(t *testing.T) {
 
 func TestGetAllQuestions_Integration(t *testing.T) {
 	clearDatabase()
+
 	// Arrange: Insert multiple test questions
 	questions := []model.Question{
 		utils.GenerateQuestion(nil),
@@ -245,6 +270,9 @@ func TestGetAllQuestions_Integration(t *testing.T) {
 
 	// Parse the response
 	var response []model.Question
-	json.Unmarshal(w.Body.Bytes(), &response)
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Fatalf("Failed to unmarshal response: %v", err)
+	}
 	assert.Len(t, response, len(questions))
 }

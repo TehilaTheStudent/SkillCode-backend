@@ -24,7 +24,7 @@ type QuestionRepository struct {
 	collection *mongo.Collection
 }
 
-// NewQuestionRepository creates a new repository instance
+// NewQuestionRepository creates a new QuestionRepository with the provided MongoDB database.
 func NewQuestionRepository(db *mongo.Database) *QuestionRepository {
 	return &QuestionRepository{
 		collection: db.Collection("questions"),
@@ -33,6 +33,7 @@ func NewQuestionRepository(db *mongo.Database) *QuestionRepository {
 
 // Implementing the interface methods
 
+// CreateQuestion inserts a new question into the database and returns the created question with its ID.
 func (r *QuestionRepository) CreateQuestion(question model.Question) (*model.Question, error) {
 	// Set the CreatedAt and UpdatedAt timestamps
 	question.CreatedAt = time.Now()
@@ -51,6 +52,7 @@ func (r *QuestionRepository) CreateQuestion(question model.Question) (*model.Que
 	return &question, nil
 }
 
+// GetQuestionByID retrieves a question from the database by its ID.
 func (r *QuestionRepository) GetQuestionByID(id primitive.ObjectID) (*model.Question, error) {
 	var question model.Question
 	err := r.collection.FindOne(context.Background(), bson.M{"_id": id}).Decode(&question)
@@ -65,6 +67,7 @@ func (r *QuestionRepository) GetQuestionByID(id primitive.ObjectID) (*model.Ques
 	return &question, err
 }
 
+// GetAllQuestions retrieves all questions from the database.
 func (r *QuestionRepository) GetAllQuestions() ([]model.Question, error) {
 	var questions []model.Question
 	cursor, err := r.collection.Find(context.Background(), bson.M{})
@@ -83,6 +86,7 @@ func (r *QuestionRepository) GetAllQuestions() ([]model.Question, error) {
 	return questions, nil
 }
 
+// UpdateQuestion updates an existing question in the database by its ID.
 func (r *QuestionRepository) UpdateQuestion(id primitive.ObjectID, question model.Question) (bool, error) {
 	question.UpdatedAt = time.Now()
 	updateResult, err := r.collection.UpdateOne(context.Background(), bson.M{"_id": id}, bson.M{"$set": question})
@@ -98,6 +102,7 @@ func (r *QuestionRepository) UpdateQuestion(id primitive.ObjectID, question mode
 	return true, nil
 }
 
+// DeleteQuestion deletes a question from the database by its ID.
 func (r *QuestionRepository) DeleteQuestion(id primitive.ObjectID) (bool, error) {
 	deleteResult, err := r.collection.DeleteOne(context.Background(), bson.M{"_id": id})
 	if err != nil {

@@ -22,5 +22,5 @@ func New(code int, message string) *CustomError {
 }
 
 var (
-	ErrInternal  = New(500, "internal server error")
+	ErrInternal = New(500, "internal server error")
 )

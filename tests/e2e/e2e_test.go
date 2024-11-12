@@ -3,6 +3,7 @@ package e2e
 import (
 	"bytes"
 	"encoding/json"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -52,7 +53,10 @@ func TestCreateRetrieveUpdateDeleteQuestion(t *testing.T) {
 	assert.Equal(t, http.StatusOK, retrieveResp.StatusCode)
 
 	var retrievedQuestion map[string]interface{}
-	json.NewDecoder(retrieveResp.Body).Decode(&retrievedQuestion)
+	err := json.NewDecoder(retrieveResp.Body).Decode(&retrievedQuestion)
+	if err != nil {
+		t.Fatalf("Failed to decode retrieved question: %v", err)
+	}
 	assert.Equal(t, "Merge Sort", retrievedQuestion["title"])
 
 	// Step 3: Update the question
@@ -68,7 +72,10 @@ func TestCreateRetrieveUpdateDeleteQuestion(t *testing.T) {
 	assert.Equal(t, http.StatusOK, updatedResp.StatusCode)
 
 	var updatedQuestion map[string]interface{}
-	json.NewDecoder(updatedResp.Body).Decode(&updatedQuestion)
+	err = json.NewDecoder(updatedResp.Body).Decode(&updatedQuestion)
+	if err != nil {
+		t.Fatalf("Failed to decode updated question: %v", err)
+	}
 	assert.Equal(t, "Updated Merge Sort", updatedQuestion["title"])
 	assert.Equal(t, "private", updatedQuestion["visibility"])
 
@@ -102,60 +109,70 @@ func TestErrorHandlingOnInvalidInput(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, deleteResp.StatusCode)
 }
 
-func createQuestion(t *testing.T, body string) (*http.Response, string) {
-	client := &http.Client{}
+func TestUserSolutionSubmission(t *testing.T) {
+	// Step 1: Create a question
+	createBody := utils.GenerateCreateQuestionPayload(map[string]interface{}{
+		"title":      "Binary Search",
+		"visibility": "public",
+	})
+	createResp, createID := createQuestion(t, createBody)
+	assert.Equal(t, http.StatusOK, createResp.StatusCode)
+	assert.NotEmpty(t, createID)
 
-	// Use body directly as it's already a JSON string
-	req, err := http.NewRequest("POST", baseURL+"/questions", bytes.NewBuffer([]byte(body)))
+	// Step 2: Submit a solution for the created question
+	solutionBody := `{
+		"language": "python",
+		"user_function": "def binary_search(arr, target):\n    left, right = 0, len(arr) - 1\n    while left <= right\n        mid = (left + right) // 2\n        if arr[mid] == target\n            return mid\n        elif arr[mid] < target\n            left = mid + 1\n        else\n            right = mid - 1\n    return -1"
+	}`
+
+	submitResp := solutionSubmission(t, createID, solutionBody)
+	assert.Equal(t, http.StatusOK, submitResp.StatusCode)
+	if submitResp.StatusCode != http.StatusOK {
+		bodyBytes, err := io.ReadAll(submitResp.Body)
+		assert.NoError(t, err)
+		t.Logf("Response body: %s", string(bodyBytes))
+	}
+	assert.Equal(t, http.StatusOK, submitResp.StatusCode)
+	// Step 3: Clean up the created question
+	deleteResp := deleteQuestion(t, createID)
+	assert.Equal(t, http.StatusOK, deleteResp.StatusCode)
+}
+
+func makeRequest(t *testing.T, method, url, body string) *http.Response {
+	client := &http.Client{}
+	req, err := http.NewRequest(method, url, bytes.NewBuffer([]byte(body)))
 	assert.NoError(t, err)
 	req.Header.Set("Content-Type", "application/json")
 
-	// Execute the request
 	resp, err := client.Do(req)
 	assert.NoError(t, err)
+	return resp
+}
+
+func createQuestion(t *testing.T, body string) (*http.Response, string) {
+	resp := makeRequest(t, "POST", baseURL+"/questions", body)
 	defer resp.Body.Close() // Ensure the response body is closed
 
-	// Decode the response
 	var response map[string]interface{}
-	err = json.NewDecoder(resp.Body).Decode(&response)
+	err := json.NewDecoder(resp.Body).Decode(&response)
 	assert.NoError(t, err)
 
-	// Extract the ID safely
 	id, _ := response["id"].(string)
-
 	return resp, id
 }
 
 func getQuestionByID(t *testing.T, id string) *http.Response {
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", baseURL+"/questions/"+id, nil)
-	assert.NoError(t, err)
-
-	resp, err := client.Do(req)
-	assert.NoError(t, err)
-	return resp
+	return makeRequest(t, "GET", baseURL+"/questions/"+id, "")
 }
 
 func updateQuestion(t *testing.T, id string, body string) *http.Response {
-	client := &http.Client{}
-
-	// Use the JSON string directly as the request body
-	req, err := http.NewRequest("PUT", baseURL+"/questions/"+id, bytes.NewBuffer([]byte(body)))
-	assert.NoError(t, err)
-	req.Header.Set("Content-Type", "application/json")
-
-	// Send the request
-	resp, err := client.Do(req)
-	assert.NoError(t, err)
-	return resp
+	return makeRequest(t, "PUT", baseURL+"/questions/"+id, body)
 }
 
 func deleteQuestion(t *testing.T, id string) *http.Response {
-	client := &http.Client{}
-	req, err := http.NewRequest("DELETE", baseURL+"/questions/"+id, nil)
-	assert.NoError(t, err)
+	return makeRequest(t, "DELETE", baseURL+"/questions/"+id, "")
+}
 
-	resp, err := client.Do(req)
-	assert.NoError(t, err)
-	return resp
+func solutionSubmission(t *testing.T, questionID string, body string) *http.Response {
+	return makeRequest(t, "POST", baseURL+"/questions/"+questionID+"/test", body)
 }

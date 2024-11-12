@@ -2,9 +2,6 @@ package utils
 
 import (
 	"encoding/json"
-	"fmt"
-	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/model"
@@ -93,17 +90,26 @@ func GenerateCreateQuestionPayload(overrides map[string]interface{}) string {
 // GenerateUserFunction generates a user function for the given language.
 // Supports optional overrides for customization.
 func GenerateUserFunction(language string, overrides map[string]interface{}) model.Solution {
-
 	// Get the default function for the language
 	solution := model.Solution{
 		Function: generateUserFunction(language),
 		Language: language,
 	}
 
+	// Apply overrides to customize specific fields
+	for key, value := range overrides {
+		switch key {
+		case "Function":
+			solution.Function = value.(string)
+		case "Language":
+			solution.Language = value.(string)
+		}
+	}
+
 	return solution
 }
 
-// GenerateUserFunction generates a default user function for the specified language.
+// generateUserFunction generates a default user function for the specified language.
 func generateUserFunction(language string) string {
 	switch language {
 	case "golang":
@@ -154,39 +160,4 @@ func GenerateUserFunctionPayload(language string) string {
 	// Convert payload to JSON
 	jsonData, _ := json.Marshal(payload)
 	return string(jsonData)
-}
-
-// EnsureWorkingDirectory ensures the working directory is the project root by looking for README.md
-func EnsureWorkingDirectory() {
-	// Name of the file that signifies the root directory
-	rootFile := "README.md"
-
-	// Get the current working directory
-	cwd, err := os.Getwd()
-	if err != nil {
-		fmt.Printf("Failed to get current working directory: %v\n", err)
-		os.Exit(1)
-	}
-
-	// Check if README.md exists in the current directory
-	for i := 0; i < 2; i++ { // Allow up to 2 levels of upward movement
-		if _, err := os.Stat(filepath.Join(cwd, rootFile)); err == nil {
-			// Found README.md, assume this is the root directory
-			return
-		}
-
-		// Move up one level
-		cwd = filepath.Join(cwd, "..")
-		if err := os.Chdir(cwd); err != nil {
-			fmt.Printf("Failed to change directory: %v\n", err)
-			os.Exit(1)
-		}
-	}
-
-	// Final check to ensure we are in the correct directory
-	cwd, _ = os.Getwd()
-	if _, err := os.Stat(filepath.Join(cwd, rootFile)); os.IsNotExist(err) {
-		fmt.Printf("Failed to locate project root with '%s'. Current directory: %s\n", rootFile, cwd)
-		os.Exit(1)
-	}
 }

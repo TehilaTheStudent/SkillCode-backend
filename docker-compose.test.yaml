@@ -4,20 +4,28 @@ services:
   mongo:
     image: mongo:latest
     container_name: mongo
-    ports:
-      - "27017:27017"
+    network_mode: "host"  # Use host network
+    # ports:
+    #   - "27017:27017"
     volumes:
       - mongo-data:/data/db
 
   skillcode-backend:
     image: tehilathestudent/skillcode-backend:latest
+    container_name: skillcode-backend
+    network_mode: "host"  # Use host network
     depends_on:
       - mongo
     environment:
-      - MONGO_URI=mongodb://mongo:27017
-      - MONGO_DB=test_database
-    ports:
-      - "8080:8080"
+      - MONGO_URI=mongodb://localhost:27017
+      - MONGO_DB=skillcode_db
+      - KUBECONFIG=/root/.kube/config
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock # Mount Docker daemon socket for Kind
+      - ~/.kube:/root/.kube                       # Mount kubeconfig to interact with Kind cluster
+      - ./assets:/app/assets                      # Mount assets directory
+    # ports:
+    #   - "8080:8080"
 
   tests:
     build:
@@ -25,11 +33,12 @@ services:
       dockerfile: Dockerfile.tests
     depends_on:
       - skillcode-backend
+    network_mode: "host"  # Use host network
     environment:
-      - APP_URL=http://skillcode-backend:8080
+      - APP_URL=http://localhost:8080
     command: >
       sh -c "
-      while ! nc -z skillcode-backend 8080; do
+      while ! nc -z localhost 8080; do
         echo 'Waiting for backend...';
         sleep 1;
       done;

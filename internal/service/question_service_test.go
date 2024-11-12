@@ -134,6 +134,14 @@ func TestDeleteQuestion(t *testing.T) {
 	mockRepo.AssertExpectations(t)
 }
 
+func assertInvalidIDError(t *testing.T, err error, invalidID string) {
+	assert.Error(t, err)
+	assert.IsType(t, &utils.CustomError{}, err)
+	customErr := err.(*utils.CustomError)
+	assert.Equal(t, 400, customErr.Code)
+	assert.Equal(t, "Invalid ID: "+invalidID, customErr.Message)
+}
+
 func TestGetQuestionByID_invalidId(t *testing.T) {
 	mockRepo := new(MockQuestionRepository)
 	service := NewQuestionService(mockRepo)
@@ -142,12 +150,9 @@ func TestGetQuestionByID_invalidId(t *testing.T) {
 	_, err := service.GetQuestionByID("invalid-id")
 
 	// Assert: Verify the result
-	assert.Error(t, err)
-	assert.IsType(t, &utils.CustomError{}, err)
-	customErr := err.(*utils.CustomError)
-	assert.Equal(t, 400, customErr.Code)
-	assert.Equal(t, "Invalid ID: invalid-id", customErr.Message)
+	assertInvalidIDError(t, err, "invalid-id")
 }
+
 func TestUpdateQuestion_invalidId(t *testing.T) {
 	mockRepo := new(MockQuestionRepository)
 	service := NewQuestionService(mockRepo)
@@ -168,11 +173,7 @@ func TestUpdateQuestion_invalidId(t *testing.T) {
 	_, err := service.UpdateQuestion("invalid-id", updatedQuestion)
 
 	// Assert: Verify the result
-	assert.Error(t, err)
-	assert.IsType(t, &utils.CustomError{}, err)
-	customErr := err.(*utils.CustomError)
-	assert.Equal(t, 400, customErr.Code)
-	assert.Equal(t, "Invalid ID: invalid-id", customErr.Message)
+	assertInvalidIDError(t, err, "invalid-id")
 }
 
 func TestDeleteQuestion_invalidId(t *testing.T) {
@@ -183,9 +184,5 @@ func TestDeleteQuestion_invalidId(t *testing.T) {
 	err := service.DeleteQuestion("invalid-id")
 
 	// Assert: Verify the result
-	assert.Error(t, err)
-	assert.IsType(t, &utils.CustomError{}, err)
-	customErr := err.(*utils.CustomError)
-	assert.Equal(t, 400, customErr.Code)
-	assert.Equal(t, "Invalid ID: invalid-id", customErr.Message)
+	assertInvalidIDError(t, err, "invalid-id")
 }

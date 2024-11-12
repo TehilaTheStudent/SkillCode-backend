@@ -4,6 +4,9 @@ FROM golang:latest
 # Set the working directory inside the container
 WORKDIR /app
 
+# Set the PROJECT_ROOT environment variable
+ENV PROJECT_ROOT=/app
+
 # Copy Go module files
 COPY go.mod go.sum ./
 

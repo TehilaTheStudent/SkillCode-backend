@@ -5,7 +5,7 @@ FROM python:3.10-slim
 WORKDIR /sandbox
 
 # Copy the user's code into the container
-COPY temp/python/main.py /sandbox/main.py
+COPY assets/temp/python/main.py /sandbox/main.py
 
 # Copy and execute the user's code
 CMD ["python3", "/sandbox/main.py"]

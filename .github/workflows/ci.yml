@@ -8,55 +8,61 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    env:
+      PROJECT_ROOT: ${{ github.workspace }}
+      CLUSTER_NAME: my-cluster
 
     steps:
-      # Step 1: Checkout the code
+      # Step: Checkout the code
       - name: Checkout code
         uses: actions/checkout@v2
 
-      # Step 2: Set up Docker Buildx
+      # Step: Set up Docker Buildx
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
 
-      # Step 3: Install Docker Compose
+      # Step: Install Docker Compose
       - name: Install Docker Compose
         run: |
           sudo apt-get update
           sudo apt-get install -y docker-compose
 
-      # Step 4: Install Kind and kubectl
-      - name: Install Kind and kubectl
+      # Step: Install Kind
+      - name: Install Kind
         run: |
           curl -Lo ./kind https://kind.sigs.k8s.io/dl/latest/kind-linux-amd64
           chmod +x ./kind
           sudo mv ./kind /usr/local/bin/
+
+      # Step: Install kubectl
+      - name: Install kubectl
+        run: |
           curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
           chmod +x ./kubectl
           sudo mv ./kubectl /usr/local/bin/
 
-      # Step 5: Create Kind Cluster
+      # Step: Create Kind Cluster
       - name: Create Kind Cluster
-        run: |
-          kind create cluster --name my-cluster
+        run: kind create cluster --name ${{ env.CLUSTER_NAME }}
 
-      # Step 6: Run Unit Tests
+      # Step: Run Unit Tests
       - name: Run Unit Tests
         run: |
           sudo apt-get install -y netcat
           go mod tidy
           go test ./internal/... -v
 
-      # Step 7: Delete Kind Cluster
+      # Step: Delete Kind Cluster
       - name: Delete Kind Cluster
         if: always()
-        run: kind delete cluster --name my-cluster
+        run: kind delete cluster --name ${{ env.CLUSTER_NAME }}
 
-      # Step 8: Build Docker Image
+      # Step: Build Docker Image
       - name: Build Docker Image
         if: success()
         run: docker build -t tehilathestudent/skillcode-backend:latest .
 
-      # Step 9: Push Docker Image to Docker Hub
+      # Step: Log in to Docker Hub
       - name: Log in to Docker Hub
         if: success()
         uses: docker/login-action@v1
@@ -64,11 +70,12 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_PASSWORD }}
 
+      # Step: Push Docker Image
       - name: Push Docker Image
         if: success()
         run: docker push tehilathestudent/skillcode-backend:latest
 
-      # Step 10: Run Integration Tests
+      # Step: Run Integration Tests
       - name: Run Integration Tests
         if: success()
         run: |
@@ -76,7 +83,7 @@ jobs:
           go test ./tests/integration -v
           docker-compose down
 
-      # Step 11: Run E2E Tests
+      # Step: Run E2E Tests
       - name: Run E2E Tests
         if: success()
         run: |

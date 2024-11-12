@@ -3,31 +3,30 @@ package tester_test
 import (
 	"os"
 	"testing"
-	"github.com/TehilaTheStudent/SkillCode-backend/internal/testing"
+
+	tester "github.com/TehilaTheStudent/SkillCode-backend/internal/testing"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/utils"
 )
 
 func TestTester(t *testing.T) {
-
-	// Step 1: Define the Question with Function Signatures for Multiple Languages
+	// Generate a question with function signatures for multiple languages
 	question := utils.GenerateQuestion(nil)
 
-	// Step 2: Define the User Function (Body Only)
-	// For Python, the user provides only the function body (no class or method signature)
+	// Generate the user function body for Python
 	userFunctionPython := utils.GenerateUserFunction("python", nil)
 
-	// Step 5: Call TestUserSolution (Generate and Run Test Harness)
+	// Test the user solution by generating and running the test harness
 	results, err := tester.TestUserSolution(&question, userFunctionPython.Function, userFunctionPython.Language)
 	if err != nil {
 		t.Fatalf("TestUserSolution failed: %v", err)
 	}
 
-	// Step 6: Log the Results
-	// fmt.Println("Test results:\n" + results)
+	// Log the test results
 	t.Logf("Test results:\n%s", results)
 }
 
 func TestMain(m *testing.M) {
+	// Ensure the working directory is set correctly
 	utils.EnsureWorkingDirectory()
 	os.Exit(m.Run())
 }
