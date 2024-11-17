@@ -118,9 +118,7 @@ func TestUpdateQuestion(t *testing.T) {
 			ID:          objID,
 			Title:       updatedTitle,
 			Description: updatedDescription,
-			TestCases:   []model.TestCase{},
-			Visibility:  "public",
-			CreatedBy:   "user123",
+			TestCases:   []model.InputOutput{},
 		}, nil).Once()
 
 	// Set up router
@@ -189,15 +187,13 @@ func TestGetAllQuestions(t *testing.T) {
 			ID:          primitive.NewObjectID(),
 			Title:       "Two Sum",
 			Description: "Find two numbers that add up to a target.",
-			Visibility:  "public",
-			CreatedBy:   "user123",
+
 		},
 		{
 			ID:          primitive.NewObjectID(),
 			Title:       "Reverse String",
 			Description: "Reverse a given string.",
-			Visibility:  "private",
-			CreatedBy:   "user456",
+
 		},
 	}
 
@@ -235,8 +231,7 @@ func TestGetQuestionByID(t *testing.T) {
 		ID:          questionID,
 		Title:       "Two Sum",
 		Description: "Find two numbers that add up to a target.",
-		Visibility:  "public",
-		CreatedBy:   "user123",
+
 	}
 
 	// Mock the service

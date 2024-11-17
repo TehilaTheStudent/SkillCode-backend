@@ -2,7 +2,6 @@ package service
 
 import (
 	"testing"
-	"time"
 
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/model"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/utils"
@@ -160,13 +159,9 @@ func TestUpdateQuestion_invalidId(t *testing.T) {
 	updatedQuestion := model.Question{
 		Title:       "Updated Test Question",
 		Description: "This is an updated test question",
-		TestCases: []model.TestCase{
-			{Input: "input1", ExpectedOutput: "output1"},
+		TestCases: []model.InputOutput{
+			{Parameters: []string{"input1"}, ExpectedOutput: "output1"},
 		},
-		Visibility: "public",
-		CreatedBy:  "tester",
-		CreatedAt:  time.Now(),
-		UpdatedAt:  time.Now(),
 	}
 
 	// Act: Call the service method with an invalid ID

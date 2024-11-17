@@ -7,17 +7,21 @@ import (
 
 // Config holds all dynamic configuration values
 type Config struct {
-	MongoDBURI string
-	DBName     string
-	Port       string
+	MongoDBURI  string
+	DBName      string
+	Port        string
+	FrontendURL string
+	Base        string
 }
 
 // LoadConfig loads the application configuration from environment variables or a config file.
 func LoadConfig() *Config {
 	return &Config{
-		MongoDBURI: getEnv("MONGODB_URI", "mongodb://localhost:27017"),
-		DBName:     getEnv("MONGO_DB", "skillcode_db"),
-		Port:       getEnv("PORT", "8080"),
+		MongoDBURI:  getEnv("MONGODB_URI", "mongodb://localhost:27017"),
+		DBName:      getEnv("MONGO_DB", "skillcode_db"),
+		Port:        getEnv("PORT", "8080"),
+		FrontendURL: getEnv("FRONTEND_URL", "*"),
+		Base:        "skillcode",
 	}
 }
 

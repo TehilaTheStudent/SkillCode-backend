@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"time"
 
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/model"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/utils"
@@ -35,9 +34,7 @@ func NewQuestionRepository(db *mongo.Database) *QuestionRepository {
 
 // CreateQuestion inserts a new question into the database and returns the created question with its ID.
 func (r *QuestionRepository) CreateQuestion(question model.Question) (*model.Question, error) {
-	// Set the CreatedAt and UpdatedAt timestamps
-	question.CreatedAt = time.Now()
-	question.UpdatedAt = time.Now()
+
 
 	// Insert the question into the database
 	result, err := r.collection.InsertOne(context.Background(), question)
@@ -88,7 +85,6 @@ func (r *QuestionRepository) GetAllQuestions() ([]model.Question, error) {
 
 // UpdateQuestion updates an existing question in the database by its ID.
 func (r *QuestionRepository) UpdateQuestion(id primitive.ObjectID, question model.Question) (bool, error) {
-	question.UpdatedAt = time.Now()
 	updateResult, err := r.collection.UpdateOne(context.Background(), bson.M{"_id": id}, bson.M{"$set": question})
 	if err != nil {
 		return false, utils.ErrInternal

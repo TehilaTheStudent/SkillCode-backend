@@ -2,7 +2,6 @@ package utils
 
 import (
 	"encoding/json"
-	"time"
 
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/model"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -16,24 +15,22 @@ func GenerateQuestion(overrides map[string]interface{}) model.Question {
 		ID:          primitive.NewObjectID(),
 		Title:       "Default Title",
 		Description: "Default Description",
-		TestCases: []model.TestCase{
-			{Input: "[1, 2, 3, 4, 5], 3", ExpectedOutput: "2"},
-			{Input: "[10, 20, 30, 40], 30", ExpectedOutput: "2"},
+		Difficulty:  "Easy",
+		Category:    "Array",
+		Stats:       0,
+		Examples: []model.InputOutput{
+			{Parameters: []string{"[1, 2, 3, 4, 5]", "3"}, ExpectedOutput: "2"},
 		},
-		Languages: []model.LanguageConfig{
-			{
-				Language:          "golang",
-				FunctionSignature: "func binarySearch(nums []int, target int) int",
-			},
-			{
-				Language:          "python",
-				FunctionSignature: "def binary_search(nums: List[int], target: int) -> int:",
-			},
+		TestCases: []model.InputOutput{
+			{Parameters: []string{"[1, 2, 3, 4, 5]", "3"}, ExpectedOutput: "2"},
+			{Parameters: []string{"[10, 20, 30, 40], 30"}, ExpectedOutput: "2"},
 		},
-		Visibility: "public",
-		CreatedBy:  "test_user",
-		CreatedAt:  time.Now(),
-		UpdatedAt:  time.Now(),
+		FunctionConfig: model.FunctionConfig{
+			Name:       "binarySearch",
+			Parameters: &[]model.Parameter{{Name: "nums", ParamType: model.AbstractType{Type: "int"}}, {Name: "target", ParamType: model.AbstractType{Type: "int"}}},
+			ReturnType: &model.AbstractType{Type: "int"},
+		},
+		Languages: []string{"golang", "python"},
 	}
 
 	// Apply overrides to customize specific fields
@@ -46,17 +43,19 @@ func GenerateQuestion(overrides map[string]interface{}) model.Question {
 		case "Description":
 			question.Description = value.(string)
 		case "TestCases":
-			question.TestCases = value.([]model.TestCase)
+			question.TestCases = value.([]model.InputOutput)
 		case "Languages":
-			question.Languages = value.([]model.LanguageConfig)
-		case "Visibility":
-			question.Visibility = value.(string)
-		case "CreatedBy":
-			question.CreatedBy = value.(string)
-		case "CreatedAt":
-			question.CreatedAt = value.(time.Time)
-		case "UpdatedAt":
-			question.UpdatedAt = value.(time.Time)
+			question.Languages = value.([]string)
+		case "Difficulty":
+			question.Difficulty = value.(string)
+		case "Category":
+			question.Category = value.(string)
+		case "Stats":
+			question.Stats = value.(int)
+		case "Examples":
+			question.Examples = value.([]model.InputOutput)
+		case "FunctionConfig":
+			question.FunctionConfig = value.(model.FunctionConfig)
 		}
 	}
 
@@ -68,12 +67,21 @@ func GenerateCreateQuestionPayload(overrides map[string]interface{}) string {
 	payload := map[string]interface{}{
 		"title":       "Default Title",
 		"description": "Default Description",
+		"difficulty":  "Easy",
+		"category":    "Array",
+		"stats":       0,
+		"examples": []map[string]interface{}{
+			{"parameters": []string{"[1, 2, 3, 4, 5]", "3"}, "expected_output": "2"},
+		},
 		"test_cases": []map[string]string{
 			{"input": "[1,2,3]", "expected_output": "6"},
 		},
-		"languages": []map[string]string{
-			{"language": "golang", "function_signature": "func example() string"},
+		"function_config": map[string]interface{}{
+			"name":        "binarySearch",
+			"parameters":  []map[string]string{{"name": "nums", "param_type": "[]int"}, {"name": "target", "param_type": "int"}},
+			"return_type": "int",
 		},
+		"languages":  []string{"golang", "python"},
 		"visibility": "public",
 		"created_by": "test_user",
 	}

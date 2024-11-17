@@ -1,7 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"net/http"
+	"time"
 
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/config"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/db"
@@ -10,6 +13,7 @@ import (
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/service"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/rs/cors"
 )
 
 func main() {
@@ -32,11 +36,27 @@ func main() {
 	// Setup Gin router
 	r := gin.Default()
 
+	// Add CORS middleware
+	corsMiddleware := cors.New(cors.Options{
+		AllowedOrigins:   []string{"*"}, // Allow Nuxt frontend
+		AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodDelete, http.MethodPut, http.MethodOptions},
+		AllowCredentials: true,
+		AllowedHeaders:   []string{"Origin", "Content-Type", "Authorization"}, // Allowed headers
+		MaxAge:           int(12 * time.Hour / time.Second),                   // Cache preflight request for 12 hours
+
+	})
+
+	// Wrap Gin router with CORS middleware
+	r.Use(func(c *gin.Context) {
+		corsMiddleware.HandlerFunc(c.Writer, c.Request)
+		c.Next()
+	})
+
 	// Register routes
 	handler.RegisterQuestionRoutes(r, questionHandler)
 
-	// Run the server
-	if err := r.Run(); err != nil {
+	// Start the server
+	if err := r.Run(fmt.Sprintf(":%s", cfg.Port)); err != nil {
 		log.Fatalf("Failed to run server: %v", err)
 	}
 }

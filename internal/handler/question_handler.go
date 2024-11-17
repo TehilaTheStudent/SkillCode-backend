@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/TehilaTheStudent/SkillCode-backend/internal/config"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/model"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/service"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/utils"
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator"
+	// "github.com/go-playground/validator"
 )
 
 // QuestionHandler holds the service interface
@@ -23,12 +24,13 @@ func NewQuestionHandler(service service.QuestionServiceInterface) *QuestionHandl
 
 // RegisterQuestionRoutes sets up the routes for question-related endpoints
 func RegisterQuestionRoutes(r *gin.Engine, handler *QuestionHandler) {
-	r.POST("/questions", handler.CreateQuestion)
-	r.GET("/questions/:id", handler.GetQuestionByID)
-	r.GET("/questions", handler.GetAllQuestions)
-	r.PUT("/questions/:id", handler.UpdateQuestion)
-	r.DELETE("/questions/:id", handler.DeleteQuestion)
-	r.POST("/questions/:id/test", handler.TestQuestion)
+	appGroup := r.Group(config.LoadConfig().Base)
+	appGroup.POST("/questions", handler.CreateQuestion)
+	appGroup.GET("/questions/:id", handler.GetQuestionByID)
+	appGroup.GET("/questions", handler.GetAllQuestions)
+	appGroup.PUT("/questions/:id", handler.UpdateQuestion)
+	appGroup.DELETE("/questions/:id", handler.DeleteQuestion)
+	appGroup.POST("/questions/:id/test", handler.TestQuestion)
 }
 
 // CreateQuestion creates a new question
@@ -39,17 +41,17 @@ func (h *QuestionHandler) CreateQuestion(c *gin.Context) {
 		return
 	}
 	// Use go-playground/validator to validate struct fields
-	validate := validator.New()
-	if err := validate.Struct(question); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
+	// validate := validator.New()
+	// if err := validate.Struct(question); err != nil {
+	// 	c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	// 	return
+	// }
 	createdQuestion, err := h.Service.CreateQuestion(question)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, createdQuestion)
+	c.JSON(http.StatusCreated, createdQuestion)
 }
 
 // GetQuestionByID retrieves a question by its ID
