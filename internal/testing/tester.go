@@ -8,34 +8,15 @@ import (
 	"strings"
 	"time"
 
+	"github.com/TehilaTheStudent/SkillCode-backend/internal/config"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/model"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/utils"
 )
 
-// Config holds the dynamic configuration values
-type Config struct {
-	ImageName     string
-	DockerFilePath string
-	PodFilePath   string
-	PodName       string
-	ClusterName   string
-}
-
-func NewConfig() *Config {
-	return &Config{
-		ImageName:     "user-solution:latest",
-		DockerFilePath: "./assets/Dockerfile.python",
-		PodFilePath:   "./assets/solution_pod.yaml",
-		PodName:       "solution-pod",
-		ClusterName:   "my-cluster",
-	}
-}
-
 // executeFunction is a placeholder for the logic to execute a user's function with test cases.
 // This function should be implemented in a real environment with sandboxing.
-func TestUserSolution(question *model.Question, userFunction string, language model.PredefinedSupportedLanguage) (string, error) {
+func TestUserSolution(question *model.Question, userFunction string, language model.PredefinedSupportedLanguage, config config.ConfigSandbox) (string, error) {
 	tester := NewTester()
-	config := NewConfig()
 	// Ensure cleanup always happens, no matter where the function exits
 	defer func() {
 		if err := tester.CleanUp(config.PodName, config.ImageName); err != nil {
@@ -75,7 +56,7 @@ func TestUserSolution(question *model.Question, userFunction string, language mo
 		return "", utils.New(500, "failed to get pod logs: "+err.Error())
 	}
 	// Save logs to a file
-	// if err := tester.SavePodLogs(config.PodName, "./temp/python/logs.txt"); err != nil {
+	// if err := tester.SavePodLogs(config.PodName, "./user-code/python/logs.txt"); err != nil {
 	// 	return "", utils.New(500, "failed to save pod logs: "+err.Error())
 	// }
 

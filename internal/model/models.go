@@ -97,7 +97,7 @@ type Question struct {
 }
 
 // Solution represents a user-provided solution for a coding question
-type Solution struct {
+type Submission struct {
 	Language PredefinedSupportedLanguage `json:"language"`
 	Code string `json:"code"`
 }

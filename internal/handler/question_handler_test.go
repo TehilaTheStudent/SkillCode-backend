@@ -48,7 +48,7 @@ func (m *MockQuestionService) DeleteQuestion(id string) error {
 	return args.Error(0)
 }
 
-func (m *MockQuestionService) TestQuestion(id string, solution model.Solution) (string, error) {
+func (m *MockQuestionService) TestQuestion(id string, solution model.Submission) (string, error) {
 	args := m.Called(id, solution)
 	return args.String(0), args.Error(1)
 }
@@ -187,13 +187,11 @@ func TestGetAllQuestions(t *testing.T) {
 			ID:          primitive.NewObjectID(),
 			Title:       "Two Sum",
 			Description: "Find two numbers that add up to a target.",
-
 		},
 		{
 			ID:          primitive.NewObjectID(),
 			Title:       "Reverse String",
 			Description: "Reverse a given string.",
-
 		},
 	}
 
@@ -231,7 +229,6 @@ func TestGetQuestionByID(t *testing.T) {
 		ID:          questionID,
 		Title:       "Two Sum",
 		Description: "Find two numbers that add up to a target.",
-
 	}
 
 	// Mock the service

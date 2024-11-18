@@ -38,7 +38,7 @@ func setupDatabase() {
 	defer cancel()
 
 	// Load configuration
-	cfg := config.LoadConfig()
+	cfg := config.LoadConfigAPI()
 
 	// Connect to MongoDB
 	var err error

@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod
+spec:
+  containers:
+  - name: python-test-container
+    image: python-test:latest
+    imagePullPolicy: Never

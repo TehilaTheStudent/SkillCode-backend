@@ -26,7 +26,7 @@ func NewQuestionHandler(service service.QuestionServiceInterface) *QuestionHandl
 
 // RegisterQuestionRoutes sets up the routes for question-related endpoints
 func RegisterQuestionRoutes(r *gin.Engine, handler *QuestionHandler) {
-	appGroup := r.Group(config.LoadConfig().Base)
+	appGroup := r.Group(config.LoadConfigAPI().Base)
 	appGroup.POST("/questions", handler.CreateQuestion)
 	appGroup.GET("/questions/:id", handler.GetQuestionByID)
 	appGroup.GET("/questions", handler.GetAllQuestions)
@@ -110,7 +110,7 @@ func (h *QuestionHandler) DeleteQuestion(c *gin.Context) {
 // TestQuestion simulates running a user-provided function against test cases for a question.
 func (h *QuestionHandler) TestQuestion(c *gin.Context) {
 	id := c.Param("id")
-	var submission model.Solution
+	var submission model.Submission
 	if err := c.ShouldBindJSON(&submission); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

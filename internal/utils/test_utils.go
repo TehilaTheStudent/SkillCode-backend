@@ -101,10 +101,10 @@ func GenerateCreateQuestionPayload(overrides map[string]interface{}) string {
 
 // GenerateUserFunction generates a user function for the given language.
 // Supports optional overrides for customization.
-func GenerateUserFunction(language string, overrides map[string]interface{}) model.Solution {
+func GenerateUserFunction(language string, overrides map[string]interface{}) model.Submission {
 	// Get the default function for the language
-	solution := model.Solution{
-		Code: generateUserFunction(language),
+	solution := model.Submission{
+		Code:     generateUserFunction(language),
 		Language: model.Python,
 	}
 

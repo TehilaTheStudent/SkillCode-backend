@@ -1,9 +1,10 @@
 package service
 
 import (
+	"github.com/TehilaTheStudent/SkillCode-backend/internal/config"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/model"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/repository"
-	tester "github.com/TehilaTheStudent/SkillCode-backend/internal/testing"
+	"github.com/TehilaTheStudent/SkillCode-backend/internal/testing"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/utils"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -15,7 +16,7 @@ type QuestionServiceInterface interface {
 	GetAllQuestions() ([]model.Question, error)
 	UpdateQuestion(id string, question model.Question) (*model.Question, error)
 	DeleteQuestion(id string) error
-	TestQuestion(id string, solution model.Solution) (string, error)
+	TestQuestion(id string, solution model.Submission) (string, error)
 }
 
 type QuestionService struct {
@@ -83,17 +84,27 @@ func (s *QuestionService) DeleteQuestion(id string) error {
 }
 
 // TestQuestion simulates running a user-provided function against test cases for a question.
-func (s *QuestionService) TestQuestion(questionId string, solution model.Solution) (string, error) {
+func (s *QuestionService) TestQuestion(questionId string, submission model.Submission) (string, error) {
 	objID, err := handleInvalidID(questionId)
 	if err != nil {
 		return "", err
 	}
+	//validations:
 	question, err := s.Repo.GetQuestionByID(objID)
 	if err != nil {
 		return "", utils.New(404, "Question not found with ID: "+questionId)
 	}
-
-	output, err := tester.TestUserSolution(question, solution.Code, solution.Language)
+	// Step 3: Prepare Python Test Runner
+	sandboxConfig, err := config.NewSandboxConfig(submission.Language)
+	if err != nil {
+		return "", err
+	}
+	testRunnerPath := sandboxConfig.UserCodePath
+	err = tester.CreatePythonTestRunner(testRunnerPath, *question, submission.Code)
+	if err != nil {
+		return "", err
+	}
+	output, err := tester.TestUserSolution(question, submission.Code, submission.Language, *sandboxConfig)
 	if err != nil {
 		return "", err
 	}

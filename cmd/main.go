@@ -21,7 +21,7 @@ func main() {
 	utils.EnsureWorkingDirectory()
 
 	// Load the configuration
-	cfg := config.LoadConfig()
+	cfg := config.LoadConfigAPI()
 
 	// Initialize MongoDB client
 	db.ConnectMongoDB(cfg.MongoDBURI)

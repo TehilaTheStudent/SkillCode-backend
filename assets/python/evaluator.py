@@ -21,12 +21,12 @@ def run_test_cases(compiled_code, test_cases, function_name):
 
     for case in test_cases:
         try:
-            # Parse inputs
-            inputs = parse_input(case["input"])
+            # Parse each parameter string individually
+            inputs = [parse_input(param) for param in case["parameters"]]
             expected_output = parse_input(case["expected_output"])
 
             # Invoke the user's function
-            actual_output = user_function(*inputs) if isinstance(inputs, tuple) else user_function(inputs)
+            actual_output = user_function(*inputs)
 
             # Compare outputs
             if actual_output == expected_output:
@@ -59,9 +59,10 @@ def evaluate_user_code(user_code, test_cases, function_name):
     results = run_test_cases(compiled_code, test_cases, function_name)
     return results
 
-
-# Example Usage:
-user_code = """
+if __name__ == "__main__":
+   
+    # Example Usage:
+    user_code = """
 def binarySearch(arr, target):
     left, right = 0, len(arr) - 1
     while left <= right:
@@ -73,14 +74,17 @@ def binarySearch(arr, target):
         else:
             right = mid - 1
     return -1
-"""
+    """
 
-test_cases = [
-    {"input": "[[1, 2, 3, 4, 5], 3]", "expected_output": "2"},
-    {"input": "[[1, 2, 3, 4, 5], 6]", "expected_output": "-1"},
-]
+    test_cases = [
+        {"parameters": ["[1, 2, 3, 4, 5]", "3"], "expected_output": "2"},
+        {"parameters": ["[1, 2, 3, 4, 5]", "6"], "expected_output": "-1"},
+    ]
 
-function_name = "binarySearch"
+    function_name = "binarySearch"
 
-results = evaluate_user_code(user_code, test_cases, function_name)
-print(results)
+    results = evaluate_user_code(user_code, test_cases, function_name)
+    print(results)
+
+
+    # end of example usage

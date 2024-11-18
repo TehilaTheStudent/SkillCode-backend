@@ -25,3 +25,10 @@ else
     echo "Failed to create cluster '$CLUSTER_NAME'."
     exit 1
 fi
+
+
+# 1.cluster exists and running in docker (if exists- delete it)
+#2.kubectl context
+#  kubectl config use-context kind-my-cluster
+# kind delete cluster --name my-cluster
+# kind create cluster --name my-cluster

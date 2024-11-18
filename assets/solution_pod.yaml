@@ -1,9 +1,0 @@
-apiVersion: v1
-kind: Pod
-metadata:
-  name: solution-pod
-spec:
-  containers:
-  - name: solution-container
-    image: user-solution:latest
-    imagePullPolicy: Never

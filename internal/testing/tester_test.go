@@ -4,7 +4,9 @@ import (
 	"os"
 	"testing"
 
-	tester "github.com/TehilaTheStudent/SkillCode-backend/internal/testing"
+	"github.com/TehilaTheStudent/SkillCode-backend/internal/config"
+	"github.com/TehilaTheStudent/SkillCode-backend/internal/model"
+	"github.com/TehilaTheStudent/SkillCode-backend/internal/testing"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/utils"
 )
 
@@ -14,9 +16,12 @@ func TestTester(t *testing.T) {
 
 	// Generate the user function body for Python
 	userFunctionPython := utils.GenerateUserFunction("python", nil)
-
+	sandboxConfig, err := config.NewSandboxConfig(model.CSharp)
+	if err != nil {
+		return 
+	}
 	// Test the user solution by generating and running the test harness
-	results, err := tester.TestUserSolution(&question, userFunctionPython.Code, userFunctionPython.Language)
+	results, err := tester.TestUserSolution(&question, userFunctionPython.Code,userFunctionPython.Language, *sandboxConfig)
 	if err != nil {
 		t.Fatalf("TestUserSolution failed: %v", err)
 	}
