@@ -93,7 +93,7 @@ func (s *QuestionService) TestQuestion(questionId string, solution model.Solutio
 		return "", utils.New(404, "Question not found with ID: "+questionId)
 	}
 
-	output, err := tester.TestUserSolution(question, solution.Function, solution.Language)
+	output, err := tester.TestUserSolution(question, solution.Code, solution.Language)
 	if err != nil {
 		return "", err
 	}

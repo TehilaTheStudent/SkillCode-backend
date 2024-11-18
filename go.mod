@@ -44,6 +44,7 @@ require (
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/ettle/strcase v0.2.0
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-playground/validator v9.31.0+incompatible
 	github.com/pmezard/go-difflib v1.0.0 // indirect

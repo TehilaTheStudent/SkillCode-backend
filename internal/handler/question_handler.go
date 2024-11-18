@@ -2,8 +2,10 @@ package handler
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
+	"github.com/TehilaTheStudent/SkillCode-backend/internal/coding"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/config"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/model"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/service"
@@ -31,6 +33,8 @@ func RegisterQuestionRoutes(r *gin.Engine, handler *QuestionHandler) {
 	appGroup.PUT("/questions/:id", handler.UpdateQuestion)
 	appGroup.DELETE("/questions/:id", handler.DeleteQuestion)
 	appGroup.POST("/questions/:id/test", handler.TestQuestion)
+	appGroup.GET("/questions/:id/signature", handler.GetFunctionSignature)
+
 }
 
 // CreateQuestion creates a new question
@@ -117,6 +121,55 @@ func (h *QuestionHandler) TestQuestion(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"output": result})
+}
+
+func (h *QuestionHandler) GetFunctionSignature(c *gin.Context) {
+	// Extract question ID and language
+	id := c.Param("id")
+	language := c.Query("language")
+	if language == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Language parameter is required"})
+		return
+	}
+
+	// Validate the language
+	validLanguages := map[string]bool{
+		"Python":     true,
+		"JavaScript": true,
+		"Java":       true,
+		"Go":         true,
+		"CSharp":     true,
+		"Cpp":        true,
+	}
+	if !validLanguages[language] {
+		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Unsupported language: %s", language)})
+		return
+	}
+
+	// Fetch the question details
+	question, err := h.Service.GetQuestionByID(id)
+	if err != nil {
+		log.Printf("Error fetching question ID %s: %v", id, err)
+		HandleError(c, err)
+		return
+	}
+
+	// Generate the function signature
+	// Convert language string to PredefinedSupportedLanguage type
+	langEnum := model.PredefinedSupportedLanguage(language)
+	signature, err := coding.GenerateByQuestionAndLanguage(*question, langEnum)
+	if err != nil {
+		log.Printf("Error generating function signature for question ID %s and language %s: %v", id, language, err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Sprintf("Failed to generate function signature for language %s: %s", language, err.Error()),
+		})
+		return
+	}
+
+	// Return the function signature
+	c.JSON(http.StatusOK, gin.H{
+		"function_signature": signature,
+	})
 }
 
 func HandleError(c *gin.Context, err error) {

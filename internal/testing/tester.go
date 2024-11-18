@@ -33,7 +33,7 @@ func NewConfig() *Config {
 
 // executeFunction is a placeholder for the logic to execute a user's function with test cases.
 // This function should be implemented in a real environment with sandboxing.
-func TestUserSolution(question *model.Question, userFunction string, language string) (string, error) {
+func TestUserSolution(question *model.Question, userFunction string, language model.PredefinedSupportedLanguage) (string, error) {
 	tester := NewTester()
 	config := NewConfig()
 	// Ensure cleanup always happens, no matter where the function exits

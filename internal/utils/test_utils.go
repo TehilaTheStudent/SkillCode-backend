@@ -15,8 +15,8 @@ func GenerateQuestion(overrides map[string]interface{}) model.Question {
 		ID:          primitive.NewObjectID(),
 		Title:       "Default Title",
 		Description: "Default Description",
-		Difficulty:  "Easy",
-		Category:    "Array",
+		Difficulty:  string(model.Easy),
+		Category:    string(model.Array),
 		Stats:       0,
 		Examples: []model.InputOutput{
 			{Parameters: []string{"[1, 2, 3, 4, 5]", "3"}, ExpectedOutput: "2"},
@@ -26,11 +26,15 @@ func GenerateQuestion(overrides map[string]interface{}) model.Question {
 			{Parameters: []string{"[10, 20, 30, 40], 30"}, ExpectedOutput: "2"},
 		},
 		FunctionConfig: model.FunctionConfig{
-			Name:       "binarySearch",
-			Parameters: &[]model.Parameter{{Name: "nums", ParamType: model.AbstractType{Type: "int"}}, {Name: "target", ParamType: model.AbstractType{Type: "int"}}},
-			ReturnType: &model.AbstractType{Type: "int"},
+			Name: "binarySearch",
+			Parameters: &[]model.Parameter{{Name: "nums",
+				ParamType: model.AbstractType{Type: string(model.Array),
+					TypeChildren: &model.AbstractType{Type: string(model.Integer)}}},
+				{Name: "target",
+					ParamType: model.AbstractType{Type: string(model.Integer)}}},
+			ReturnType: &model.AbstractType{Type: string(model.Integer)},
 		},
-		Languages: []string{"golang", "python"},
+		Languages: []string{string(model.Python), string(model.Java)},
 	}
 
 	// Apply overrides to customize specific fields
@@ -100,17 +104,17 @@ func GenerateCreateQuestionPayload(overrides map[string]interface{}) string {
 func GenerateUserFunction(language string, overrides map[string]interface{}) model.Solution {
 	// Get the default function for the language
 	solution := model.Solution{
-		Function: generateUserFunction(language),
-		Language: language,
+		Code: generateUserFunction(language),
+		Language: model.Python,
 	}
 
 	// Apply overrides to customize specific fields
 	for key, value := range overrides {
 		switch key {
 		case "Function":
-			solution.Function = value.(string)
+			solution.Code = value.(string)
 		case "Language":
-			solution.Language = value.(string)
+			solution.Language = value.(model.PredefinedSupportedLanguage)
 		}
 	}
 

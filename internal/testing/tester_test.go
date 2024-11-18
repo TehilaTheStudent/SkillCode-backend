@@ -16,7 +16,7 @@ func TestTester(t *testing.T) {
 	userFunctionPython := utils.GenerateUserFunction("python", nil)
 
 	// Test the user solution by generating and running the test harness
-	results, err := tester.TestUserSolution(&question, userFunctionPython.Function, userFunctionPython.Language)
+	results, err := tester.TestUserSolution(&question, userFunctionPython.Code, userFunctionPython.Language)
 	if err != nil {
 		t.Fatalf("TestUserSolution failed: %v", err)
 	}

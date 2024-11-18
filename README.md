@@ -51,3 +51,16 @@ The repository includes three levels of tests to ensure application reliability:
 docker-compose -f docker-compose.test.yaml up --abort-on-container-exit
 ```
 ---
+
+
+
+### TODOS:
+
+- add logging
+- add error handling
+
+### Decisions:
+- start with simple types- not composite inside composite
+- no void
+- not saving functions signatues in database, although there are reusable
+- config exists twice- in the backend and frontend, they have to sync

@@ -14,6 +14,15 @@ const (
 	Boolean AtomicType = "Boolean"
 )
 
+// AtomicType represents basic types like Integer, String, etc.
+type Difficulty string
+
+const (
+	Hard   Difficulty = "Hard"
+	Medium Difficulty = "Medium"
+	Easy   Difficulty = "Easy"
+)
+
 // CompositeType represents composite types like TreeNode, Array, etc.
 type CompositeType string
 
@@ -89,6 +98,6 @@ type Question struct {
 
 // Solution represents a user-provided solution for a coding question
 type Solution struct {
-	Language string `json:"language"`
-	Function string `json:"user_function"`
+	Language PredefinedSupportedLanguage `json:"language"`
+	Code string `json:"code"`
 }
