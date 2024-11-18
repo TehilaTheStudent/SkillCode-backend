@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod
+spec:
+  containers:
+  - name: javascript-test-container
+    image: javascript-test:latest
+    imagePullPolicy: Never

@@ -100,7 +100,7 @@ func (s *QuestionService) TestQuestion(questionId string, submission model.Submi
 		return "", err
 	}
 	testRunnerPath := sandboxConfig.UserCodePath
-	err = tester.CreatePythonTestRunner(testRunnerPath, *question, submission.Code)
+	err = tester.CreateTestRunner(submission.Language, testRunnerPath, *question, submission.Code)
 	if err != nil {
 		return "", err
 	}

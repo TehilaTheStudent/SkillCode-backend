@@ -1,7 +1,7 @@
 from evaluator import evaluate_user_code
-import ds_utils as utils
 
 user_code = """def binarySearch(arr, target):
+    print(utils.generate_tree([1,2,3]))
     left, right = 0, len(arr) - 1
     while left <= right:
         mid = (left + right) // 2

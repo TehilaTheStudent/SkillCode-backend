@@ -1,3 +1,5 @@
-.vscode/
+# .vscode/
 .devcontainer/
-env.sh
+# env.sh
+logs/
+assets/javascript/node_modules/

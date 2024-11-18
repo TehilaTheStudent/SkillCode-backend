@@ -11,6 +11,7 @@ import (
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/service"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/utils"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 	// "github.com/go-playground/validator"
 )
 
@@ -132,20 +133,12 @@ func (h *QuestionHandler) GetFunctionSignature(c *gin.Context) {
 		return
 	}
 
-	// Validate the language
-	validLanguages := map[string]bool{
-		"Python":     true,
-		"JavaScript": true,
-		"Java":       true,
-		"Go":         true,
-		"CSharp":     true,
-		"Cpp":        true,
-	}
-	if !validLanguages[language] {
-		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Unsupported language: %s", language)})
+	// Map lowercase language to PredefinedSupportedLanguage
+	langEnum, err := utils.LowerToEnum(language)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid language parameter"})
 		return
 	}
-
 	// Fetch the question details
 	question, err := h.Service.GetQuestionByID(id)
 	if err != nil {
@@ -155,8 +148,6 @@ func (h *QuestionHandler) GetFunctionSignature(c *gin.Context) {
 	}
 
 	// Generate the function signature
-	// Convert language string to PredefinedSupportedLanguage type
-	langEnum := model.PredefinedSupportedLanguage(language)
 	signature, err := coding.GenerateByQuestionAndLanguage(*question, langEnum)
 	if err != nil {
 		log.Printf("Error generating function signature for question ID %s and language %s: %v", id, language, err)
@@ -173,10 +164,30 @@ func (h *QuestionHandler) GetFunctionSignature(c *gin.Context) {
 }
 
 func HandleError(c *gin.Context, err error) {
-	fmt.Println(err)
+	// Retrieve the logger from the context
+	logger, exists := c.Get("logger")
+	if !exists {
+		// Fallback: Use a default logger
+		logger = zap.L()
+	}
+
+	// Log the error with contextual information
+	LogError(c, logger.(*zap.Logger), err, http.StatusInternalServerError, err.Error())
+
+	// Respond with appropriate error message
 	if customErr, ok := err.(*utils.CustomError); ok {
 		c.JSON(customErr.Code, gin.H{"error": customErr.Message})
 	} else {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
 	}
+}
+
+func LogError(c *gin.Context, logger *zap.Logger, err error, statusCode int, message string) {
+	logger.Error("Error occurred",
+		zap.String("method", c.Request.Method),
+		zap.String("path", c.Request.URL.Path),
+		zap.Int("status", statusCode),
+		zap.String("client_ip", c.ClientIP()),
+		zap.Error(err),
+	)
 }

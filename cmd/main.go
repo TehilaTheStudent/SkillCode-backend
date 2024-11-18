@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"time"
 
@@ -14,11 +13,15 @@ import (
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/cors"
+	"go.uber.org/zap"
 )
 
 func main() {
 	// Ensure the working directory is correct
 	utils.EnsureWorkingDirectory()
+
+	// Initialize logger
+	logger := config.InitLogger()
 
 	// Load the configuration
 	cfg := config.LoadConfigAPI()
@@ -36,6 +39,27 @@ func main() {
 	// Setup Gin router
 	r := gin.Default()
 
+	// Add middlewares
+	setupMiddlewares(r, logger)
+
+	// Register routes
+	registerRoutes(r, questionHandler)
+
+	// Start the server
+	logger.Info("Starting server", zap.String("port", cfg.Port))
+	if err := r.Run(fmt.Sprintf(":%s", cfg.Port)); err != nil {
+		logger.Fatal("Failed to run server", zap.Error(err))
+	}
+}
+
+// setupMiddlewares adds required middlewares to the Gin router
+func setupMiddlewares(r *gin.Engine, logger *zap.Logger) {
+	// Inject logger into Gin context
+	r.Use(func(c *gin.Context) {
+		c.Set("logger", logger)
+		c.Next()
+	})
+
 	// Add CORS middleware
 	corsMiddleware := cors.New(cors.Options{
 		AllowedOrigins:   []string{"*"}, // Allow Nuxt frontend
@@ -43,20 +67,14 @@ func main() {
 		AllowCredentials: true,
 		AllowedHeaders:   []string{"Origin", "Content-Type", "Authorization"}, // Allowed headers
 		MaxAge:           int(12 * time.Hour / time.Second),                   // Cache preflight request for 12 hours
-
 	})
-
-	// Wrap Gin router with CORS middleware
 	r.Use(func(c *gin.Context) {
 		corsMiddleware.HandlerFunc(c.Writer, c.Request)
 		c.Next()
 	})
+}
 
-	// Register routes
+// registerRoutes registers all application routes
+func registerRoutes(r *gin.Engine, questionHandler *handler.QuestionHandler) {
 	handler.RegisterQuestionRoutes(r, questionHandler)
-
-	// Start the server
-	if err := r.Run(fmt.Sprintf(":%s", cfg.Port)); err != nil {
-		log.Fatalf("Failed to run server: %v", err)
-	}
 }

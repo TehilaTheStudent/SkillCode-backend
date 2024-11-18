@@ -57,10 +57,20 @@ docker-compose -f docker-compose.test.yaml up --abort-on-container-exit
 ### TODOS:
 
 - add logging
-- add error handling
+- add error handling:
+  - check user code before trying to compile
 
 ### Decisions:
 - start with simple types- not composite inside composite
 - no void
 - not saving functions signatues in database, although there are reusable
 - config exists twice- in the backend and frontend, they have to sync
+
+
+
+### my notes
+Things to Consider
+Sandboxing: Running user code directly can lead to security risks. Use a sandbox like VM2 in production to isolate user code and prevent access to your server.
+Timeouts: To prevent infinite loops or long-running user code, enforce execution time limits.
+Input Validation: Always validate inputs to ensure they’re in the expected format.
+Error Handling: Provide detailed feedback to users on syntax and runtime errors in their code.

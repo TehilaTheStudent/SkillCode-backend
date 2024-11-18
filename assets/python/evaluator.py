@@ -50,6 +50,7 @@ def run_test_cases(compiled_code, test_cases, function_name):
 
 def evaluate_user_code(user_code, test_cases, function_name):
     # Step 1: Compile the user's code
+    user_code="import ds_utils as utils\n"+user_code
     try:
         compiled_code = compile(user_code, filename="<user_code>", mode="exec")
     except SyntaxError as e:

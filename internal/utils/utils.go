@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
+
+	"github.com/TehilaTheStudent/SkillCode-backend/internal/model"
 )
 
 // EnsureWorkingDirectory ensures the working directory is set to the project root specified by an environment variable
@@ -25,3 +28,28 @@ func changeDirectory(path string) error {
 	}
 	return nil
 }
+
+func LowerToEnum(language string) (model.PredefinedSupportedLanguage, error) {
+	// Convert language to lowercase
+	language = strings.ToLower(language)
+	var langEnum model.PredefinedSupportedLanguage
+	switch language {
+	case "python":
+		langEnum = model.Python
+	case "javascript":
+		langEnum = model.JavaScript
+	case "java":
+		langEnum = model.Java
+	case "go":
+		langEnum = model.Go
+	case "csharp":
+		langEnum = model.CSharp
+	case "cpp":
+		langEnum = model.Cpp
+	default:
+		return "", fmt.Errorf("unsupported language: %s", language)
+	}
+	return langEnum, nil
+}
+
+

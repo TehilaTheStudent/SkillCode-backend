@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/model"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 // Config holds the dynamic configuration values
@@ -98,4 +100,41 @@ func getEnv(key, defaultValue string) string {
 		return defaultValue
 	}
 	return value
+}
+
+
+func InitLogger() *zap.Logger {
+	// Ensure the logs directory exists
+	logsDir := "logs"
+	if err := os.MkdirAll(logsDir, os.ModePerm); err != nil {
+		panic(fmt.Sprintf("Failed to create logs directory: %v", err))
+	}
+
+	// Create or open the log file
+	logFile := fmt.Sprintf("%s/app.log", logsDir)
+	file, err := os.OpenFile(logFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		panic(fmt.Sprintf("Failed to open log file: %v", err))
+	}
+
+	// Configure file writer and console writer
+	fileWriteSyncer := zapcore.AddSync(file)
+	consoleWriteSyncer := zapcore.AddSync(os.Stdout)
+
+	// Create an encoder (format for log entries)
+	encoderConfig := zap.NewProductionEncoderConfig()
+	encoderConfig.TimeKey = "time"
+	encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+
+	// Create core with file and console writers
+	core := zapcore.NewCore(
+		zapcore.NewJSONEncoder(encoderConfig),                        // JSON formatted logs
+		zapcore.NewMultiWriteSyncer(fileWriteSyncer, consoleWriteSyncer), // Log to both file and console
+		zapcore.InfoLevel, // Log level
+	)
+
+	// Create the logger
+	logger := zap.New(core, zap.AddCaller())
+
+	return logger
 }
