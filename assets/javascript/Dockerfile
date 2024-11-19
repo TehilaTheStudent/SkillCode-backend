@@ -2,7 +2,7 @@
 FROM node:18-alpine
 
 # Set a non-root user for added security
-RUN useradd -ms /bin/bash sandbox-user
+RUN adduser -D -s /bin/bash sandbox-user
 
 # Create a working directory
 WORKDIR /sandbox

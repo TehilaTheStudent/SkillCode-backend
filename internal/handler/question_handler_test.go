@@ -33,7 +33,7 @@ func (m *MockQuestionService) GetQuestionByID(id string) (*model.Question, error
 	return nil, args.Error(1)
 }
 
-func (m *MockQuestionService) GetAllQuestions() ([]model.Question, error) {
+func (m *MockQuestionService) GetAllQuestions(params model.QuestionQueryParams) ([]model.Question, error) {
 	args := m.Called()
 	return args.Get(0).([]model.Question), args.Error(1)
 }

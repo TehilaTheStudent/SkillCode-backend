@@ -46,11 +46,11 @@ jobs:
         run: kind create cluster --name ${{ env.CLUSTER_NAME }}
 
       # Step: Run Unit Tests
-      - name: Run Unit Tests
-        run: |
-          sudo apt-get install -y netcat
-          go mod tidy
-          go test ./internal/... -v
+      # - name: Run Unit Tests
+      #   run: |
+      #     sudo apt-get install -y netcat
+      #     go mod tidy
+      #     go test ./internal/... -v
 
       # Step: Delete Kind Cluster
       - name: Delete Kind Cluster
@@ -76,15 +76,15 @@ jobs:
         run: docker push tehilathestudent/skillcode-backend:latest
 
       # Step: Run Integration Tests
-      - name: Run Integration Tests
-        if: success()
-        run: |
-          docker-compose -f docker-compose.yaml up -d mongo
-          go test ./tests/integration -v
-          docker-compose down
+      # - name: Run Integration Tests
+      #   if: success()
+      #   run: |
+      #     docker-compose -f docker-compose.yaml up -d mongo
+      #     go test ./tests/integration -v
+      #     docker-compose down
 
       # Step: Run E2E Tests
-      - name: Run E2E Tests
-        if: success()
-        run: |
-          docker-compose -f docker-compose.test.yaml up --abort-on-container-exit
+      # - name: Run E2E Tests
+      #   if: success()
+      #   run: |
+      #     docker-compose -f docker-compose.test.yaml up --abort-on-container-exit

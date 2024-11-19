@@ -21,13 +21,24 @@ type ConfigSandbox struct {
 	UserCodePath   string
 }
 
+type ConfigCode struct {
+	UtilsFile string
+}
+
+const BaseDir = "./assets/"
+
+func NewConfigCode(language model.PredefinedSupportedLanguage) *ConfigCode {
+	return &ConfigCode{
+		UtilsFile: BaseDir + strings.ToLower(string(language)) + "/ds_utils",
+	}
+}
+
 // NewSandboxConfig creates a new sandbox configuration for a given language.
 func NewSandboxConfig(language model.PredefinedSupportedLanguage) (*ConfigSandbox, error) {
-	baseDir := "./assets"
 	// Dynamically derive language paths
 	// Convert language to lowercase
 	languageStr := strings.ToLower(string(language))
-	langDir := fmt.Sprintf("%s/%s", baseDir, languageStr)
+	langDir := fmt.Sprintf("%s/%s", BaseDir, languageStr)
 	defaultPodFilePath := fmt.Sprintf("%s/pod.yaml", langDir)
 	clusterName := "my-cluster"
 
@@ -87,7 +98,7 @@ func LoadConfigAPI() *ConfigAPI {
 		MongoDBURI:  getEnv("MONGODB_URI", "mongodb://localhost:27017"),
 		DBName:      getEnv("MONGO_DB", "skillcode_db"),
 		Port:        getEnv("PORT", "8080"),
-		FrontendURL: getEnv("FRONTEND_URL", "*"),
+		FrontendURL: getEnv("FRONTEND_URL", "http://127.0.0.1:3000"),
 		Base:        "skillcode",
 	}
 }
@@ -101,7 +112,6 @@ func getEnv(key, defaultValue string) string {
 	}
 	return value
 }
-
 
 func InitLogger() *zap.Logger {
 	// Ensure the logs directory exists
@@ -128,7 +138,7 @@ func InitLogger() *zap.Logger {
 
 	// Create core with file and console writers
 	core := zapcore.NewCore(
-		zapcore.NewJSONEncoder(encoderConfig),                        // JSON formatted logs
+		zapcore.NewJSONEncoder(encoderConfig),                            // JSON formatted logs
 		zapcore.NewMultiWriteSyncer(fileWriteSyncer, consoleWriteSyncer), // Log to both file and console
 		zapcore.InfoLevel, // Log level
 	)

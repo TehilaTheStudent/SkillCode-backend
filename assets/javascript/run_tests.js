@@ -1,7 +1,17 @@
 const { evaluateUserCode } = require('./evaluator.js');
-const utils = require('./ds_utils.js');
 
-const userCode = `def binary_search(arr: list[int], target: int) -> int:`;
+
+const userCode = `/**
+ *
+ * @param Array<number> arr
+ *
+ * @param number target
+ *
+ * @returns number
+ */
+function binarySearch(arr, target) {
+    // TODO: Implement this function
+}`;
 
 const testCases = [{"parameters":["[1, 2, 3, 4, 5]","3"],"expected_output":"2"},{"parameters":["[1, 2, 3, 4, 5]","6"],"expected_output":"-1"}];
 const functionName = "binarySearch";

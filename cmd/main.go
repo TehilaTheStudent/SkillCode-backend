@@ -40,7 +40,7 @@ func main() {
 	r := gin.Default()
 
 	// Add middlewares
-	setupMiddlewares(r, logger)
+	setupMiddlewares(r, logger,cfg.FrontendURL)
 
 	// Register routes
 	registerRoutes(r, questionHandler)
@@ -53,16 +53,19 @@ func main() {
 }
 
 // setupMiddlewares adds required middlewares to the Gin router
-func setupMiddlewares(r *gin.Engine, logger *zap.Logger) {
+func setupMiddlewares(r *gin.Engine, logger *zap.Logger, frontendURL string) {
 	// Inject logger into Gin context
 	r.Use(func(c *gin.Context) {
 		c.Set("logger", logger)
 		c.Next()
 	})
 
-	// Add CORS middleware
+	// Add CORS middleware with custom logic to allow the frontend
 	corsMiddleware := cors.New(cors.Options{
-		AllowedOrigins:   []string{"*"}, // Allow Nuxt frontend
+		AllowOriginFunc: func(origin string) bool {
+			// Match the exact frontend URL
+			return origin == frontendURL
+		},
 		AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodDelete, http.MethodPut, http.MethodOptions},
 		AllowCredentials: true,
 		AllowedHeaders:   []string{"Origin", "Content-Type", "Authorization"}, // Allowed headers
@@ -74,7 +77,12 @@ func setupMiddlewares(r *gin.Engine, logger *zap.Logger) {
 	})
 }
 
+
+
 // registerRoutes registers all application routes
 func registerRoutes(r *gin.Engine, questionHandler *handler.QuestionHandler) {
+	
 	handler.RegisterQuestionRoutes(r, questionHandler)
+    handler.RegisterCodeRoutes(r)
+	handler.RegisterConfigRoutes(r)
 }

@@ -70,15 +70,34 @@ func (h *QuestionHandler) GetQuestionByID(c *gin.Context) {
 	c.JSON(http.StatusOK, question)
 }
 
-// GetAllQuestions retrieves all questions
 func (h *QuestionHandler) GetAllQuestions(c *gin.Context) {
-	questions, err := h.Service.GetAllQuestions()
+	// Extract query parameters
+	q := c.Query("q")                               // Search query
+	categories := c.QueryArray("categories")        // Selected categories
+	difficulties := c.QueryArray("difficulties")    // Selected difficulties
+	sort := c.DefaultQuery("sort", "stats")         // Sorting column
+	order := c.DefaultQuery("order", "desc")        // Sorting order
+
+	// Construct query parameters object
+	params := model.QuestionQueryParams{
+		SearchQuery:  q,
+		Categories:   categories,
+		Difficulties: difficulties,
+		SortField:    sort,
+		SortOrder:    order,
+	}
+
+	// Call the service layer
+	questions, err := h.Service.GetAllQuestions(params)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	// Respond with the filtered, sorted questions
 	c.JSON(http.StatusOK, questions)
 }
+
 
 // UpdateQuestion updates an existing question
 func (h *QuestionHandler) UpdateQuestion(c *gin.Context) {

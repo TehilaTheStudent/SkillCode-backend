@@ -112,20 +112,40 @@ func ToPythonStyle(functionName string) string {
 	return strcase.ToSnake(functionName)
 }
 
-const jsFunctionTemplate = `function {{.FunctionName}}({{.Params}}) {
+const jsFunctionTemplate = `/**
+ * {{- range .ParamsDocs }}
+ * @param {{ .Type }} {{ .Name }}
+ * {{- end }}
+ * @returns {{ .ReturnType }}
+ */
+function {{.FunctionName}}({{.Params}}) {
+    // TODO: Implement this function
+}`;
+
+const tsFunctionTemplate = `function {{.FunctionName}}({{.Params}}) {
     // TODO: Implement this function
 }`
 
-// GenerateJavaScriptSignature generates a JavaScript function signature
 func GenerateJavaScriptSignature(question model.Question) (string, error) {
-	// Prepare data for template
+	// Prepare data for JSDoc and function signature
 	paramList := []string{}
+	paramDocs := []map[string]string{}
+
 	for _, param := range *question.FunctionConfig.Parameters {
-		paramList = append(paramList, fmt.Sprintf("%s: %s", param.Name, mapToJSType(param.ParamType)))
+		paramList = append(paramList, param.Name)
+
+		// Add JSDoc details for each parameter
+		paramDocs = append(paramDocs, map[string]string{
+			"Name": param.Name,
+			"Type": mapToJSType(param.ParamType),
+		})
 	}
-	data := map[string]string{
+
+	data := map[string]interface{}{
 		"FunctionName": ToJSStyle(question.FunctionConfig.Name),
 		"Params":       strings.Join(paramList, ", "),
+		"ParamsDocs":   paramDocs,
+		"ReturnType":   mapToJSType(*question.FunctionConfig.ReturnType),
 	}
 
 	// Render the template
@@ -141,6 +161,9 @@ func GenerateJavaScriptSignature(question model.Question) (string, error) {
 
 	return buf.String(), nil
 }
+
+
+
 
 // ToJSStyle converts a string to JavaScript-style camelCase
 func ToJSStyle(functionName string) string {

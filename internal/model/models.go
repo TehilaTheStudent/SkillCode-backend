@@ -101,3 +101,12 @@ type Submission struct {
 	Language PredefinedSupportedLanguage `json:"language"`
 	Code string `json:"code"`
 }
+
+
+type QuestionQueryParams struct {
+	SearchQuery  string   `json:"search_query"`
+	Categories   []string `json:"categories"`
+	Difficulties []string `json:"difficulties"`
+	SortField    string   `json:"sort_field"`
+	SortOrder    string   `json:"sort_order"`
+}
