@@ -1,4 +1,4 @@
-package utils
+package model
 
 import "fmt"
 
@@ -14,7 +14,7 @@ func (e *CustomError) Error() string {
 }
 
 // New creates a new CustomError
-func New(code int, message string) *CustomError {
+func NewCustomError(code int, message string) *CustomError {
 	return &CustomError{
 		Code:    code,
 		Message: message,
@@ -22,5 +22,5 @@ func New(code int, message string) *CustomError {
 }
 
 var (
-	ErrInternal = New(500, "internal server error")
+	ErrInternal = NewCustomError(500, "internal server error")
 )

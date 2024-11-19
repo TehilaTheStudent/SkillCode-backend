@@ -41,6 +41,7 @@ require (
 	golang.org/x/sys v0.23.0 // indirect
 	golang.org/x/text v0.17.0 // indirect
 	google.golang.org/protobuf v1.34.1 // indirect
+	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 )
 
 require (
@@ -48,6 +49,7 @@ require (
 	github.com/ettle/strcase v0.2.0
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-playground/validator v9.31.0+incompatible
+	github.com/google/uuid v1.6.0
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rs/cors v1.11.1
 	go.mongodb.org/mongo-driver v1.17.1

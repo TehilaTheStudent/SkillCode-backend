@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/config"
+	"github.com/TehilaTheStudent/SkillCode-backend/internal/dependencies"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/model"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/testing"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/utils"
@@ -32,6 +33,6 @@ func TestTester(t *testing.T) {
 
 func TestMain(m *testing.M) {
 	// Ensure the working directory is set correctly
-	utils.EnsureWorkingDirectory()
+	dependencies.EnsureWorkingDirectory()
 	os.Exit(m.Run())
 }

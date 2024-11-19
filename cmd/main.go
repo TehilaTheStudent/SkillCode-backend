@@ -2,87 +2,63 @@ package main
 
 import (
 	"fmt"
-	"net/http"
 	"time"
 
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/config"
-	"github.com/TehilaTheStudent/SkillCode-backend/internal/db"
+	"github.com/TehilaTheStudent/SkillCode-backend/internal/dependencies"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/handler"
+	"github.com/TehilaTheStudent/SkillCode-backend/internal/middleware"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/repository"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/service"
-	"github.com/TehilaTheStudent/SkillCode-backend/internal/utils"
 	"github.com/gin-gonic/gin"
-	"github.com/rs/cors"
 	"go.uber.org/zap"
 )
 
 func main() {
 	// Ensure the working directory is correct
-	utils.EnsureWorkingDirectory()
-
-	// Initialize logger
+	dependencies.EnsureWorkingDirectory()
+	// Initialize the logger
 	logger := config.InitLogger()
-
 	// Load the configuration
 	cfg := config.LoadConfigAPI()
 
-	// Initialize MongoDB client
-	db.ConnectMongoDB(cfg.MongoDBURI)
+	// Initialize the database connection and start health checks
+	initializeDatabase(cfg, logger)
+	// Initialize handlers
+	questionHandler := initializeHandlers(cfg)
 
-	// Initialize the repository and service
-	questionRepo := repository.NewQuestionRepository(db.Client.Database(cfg.DBName))
-	questionService := service.NewQuestionService(questionRepo)
-
-	// Create a handler with the service instance
-	questionHandler := handler.NewQuestionHandler(questionService)
-
-	// Setup Gin router
-	r := gin.Default()
-
-	// Add middlewares
-	setupMiddlewares(r, logger,cfg.FrontendURL)
-
-	// Register routes
-	registerRoutes(r, questionHandler)
+	// Setup the router with middlewares and routes
+	r := setupRouter(logger, cfg, questionHandler)
 
 	// Start the server
+	startServer(r, logger, cfg)
+}
+
+// initializeDatabase sets up the database connection and starts health checks
+func initializeDatabase(cfg *config.ConfigAPI, logger *zap.Logger) {
+	dependencies.ConnectMongoDB(cfg.MongoDBURI, logger)
+	dependencies.StartBackgroundHealthCheck(logger, 30*time.Second)
+}
+
+// initializeHandlers sets up the handlers for the application
+func initializeHandlers(cfg *config.ConfigAPI) *handler.QuestionHandler {
+	questionRepo := repository.NewQuestionRepository(dependencies.Client.Database(cfg.DBName))
+	questionService := service.NewQuestionService(questionRepo)
+	return handler.NewQuestionHandler(questionService)
+}
+
+// setupRouter configures the router with middlewares and routes
+func setupRouter(logger *zap.Logger, cfg *config.ConfigAPI, questionHandler *handler.QuestionHandler) *gin.Engine {
+	r := gin.Default() //logs every request to the terminal
+	middleware.SetupMiddlewares(r, logger, cfg.FrontendURL)
+	handler.RegisterRoutes(r, questionHandler)
+	return r
+}
+
+// startServer starts the HTTP server
+func startServer(r *gin.Engine, logger *zap.Logger, cfg *config.ConfigAPI) {
 	logger.Info("Starting server", zap.String("port", cfg.Port))
 	if err := r.Run(fmt.Sprintf(":%s", cfg.Port)); err != nil {
 		logger.Fatal("Failed to run server", zap.Error(err))
 	}
-}
-
-// setupMiddlewares adds required middlewares to the Gin router
-func setupMiddlewares(r *gin.Engine, logger *zap.Logger, frontendURL string) {
-	// Inject logger into Gin context
-	r.Use(func(c *gin.Context) {
-		c.Set("logger", logger)
-		c.Next()
-	})
-
-	// Add CORS middleware with custom logic to allow the frontend
-	corsMiddleware := cors.New(cors.Options{
-		AllowOriginFunc: func(origin string) bool {
-			// Match the exact frontend URL
-			return origin == frontendURL
-		},
-		AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodDelete, http.MethodPut, http.MethodOptions},
-		AllowCredentials: true,
-		AllowedHeaders:   []string{"Origin", "Content-Type", "Authorization"}, // Allowed headers
-		MaxAge:           int(12 * time.Hour / time.Second),                   // Cache preflight request for 12 hours
-	})
-	r.Use(func(c *gin.Context) {
-		corsMiddleware.HandlerFunc(c.Writer, c.Request)
-		c.Next()
-	})
-}
-
-
-
-// registerRoutes registers all application routes
-func registerRoutes(r *gin.Engine, questionHandler *handler.QuestionHandler) {
-	
-	handler.RegisterQuestionRoutes(r, questionHandler)
-    handler.RegisterCodeRoutes(r)
-	handler.RegisterConfigRoutes(r)
 }

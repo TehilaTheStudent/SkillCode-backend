@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/config"
+	"github.com/TehilaTheStudent/SkillCode-backend/internal/dependencies"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/handler"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/model"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/repository"
@@ -27,7 +28,7 @@ var questionHandler *handler.QuestionHandler
 
 // Setup integration test environment
 func TestMain(m *testing.M) {
-	utils.EnsureWorkingDirectory()
+	dependencies.EnsureWorkingDirectory()
 	setupDatabase()
 	defer teardownDatabase()
 	m.Run()

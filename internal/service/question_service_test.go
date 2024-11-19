@@ -135,8 +135,8 @@ func TestDeleteQuestion(t *testing.T) {
 
 func assertInvalidIDError(t *testing.T, err error, invalidID string) {
 	assert.Error(t, err)
-	assert.IsType(t, &utils.CustomError{}, err)
-	customErr := err.(*utils.CustomError)
+	assert.IsType(t, &model.CustomError{}, err)
+	customErr := err.(*model.CustomError)
 	assert.Equal(t, 400, customErr.Code)
 	assert.Equal(t, "Invalid ID: "+invalidID, customErr.Message)
 }

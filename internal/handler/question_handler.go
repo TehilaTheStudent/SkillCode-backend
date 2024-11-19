@@ -2,14 +2,12 @@ package handler
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/coding"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/config"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/model"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/service"
-	"github.com/TehilaTheStudent/SkillCode-backend/internal/utils"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 	// "github.com/go-playground/validator"
@@ -35,25 +33,24 @@ func RegisterQuestionRoutes(r *gin.Engine, handler *QuestionHandler) {
 	appGroup.DELETE("/questions/:id", handler.DeleteQuestion)
 	appGroup.POST("/questions/:id/test", handler.TestQuestion)
 	appGroup.GET("/questions/:id/signature", handler.GetFunctionSignature)
-
 }
 
 // CreateQuestion creates a new question
 func (h *QuestionHandler) CreateQuestion(c *gin.Context) {
 	var question model.Question
 	if err := c.ShouldBindJSON(&question); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		LogAndRespondError(c, err, http.StatusBadRequest)
 		return
 	}
 	// Use go-playground/validator to validate struct fields
 	// validate := validator.New()
 	// if err := validate.Struct(question); err != nil {
-	// 	c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	// 	LogAndRespondError(c, err, http.StatusBadRequest)
 	// 	return
 	// }
 	createdQuestion, err := h.Service.CreateQuestion(question)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		LogAndRespondError(c, err, http.StatusInternalServerError)
 		return
 	}
 	c.JSON(http.StatusCreated, createdQuestion)
@@ -64,7 +61,7 @@ func (h *QuestionHandler) GetQuestionByID(c *gin.Context) {
 	id := c.Param("id")
 	question, err := h.Service.GetQuestionByID(id)
 	if err != nil {
-		HandleError(c, err)
+		LogAndRespondError(c, err, http.StatusInternalServerError)
 		return
 	}
 	c.JSON(http.StatusOK, question)
@@ -72,11 +69,11 @@ func (h *QuestionHandler) GetQuestionByID(c *gin.Context) {
 
 func (h *QuestionHandler) GetAllQuestions(c *gin.Context) {
 	// Extract query parameters
-	q := c.Query("q")                               // Search query
-	categories := c.QueryArray("categories")        // Selected categories
-	difficulties := c.QueryArray("difficulties")    // Selected difficulties
-	sort := c.DefaultQuery("sort", "stats")         // Sorting column
-	order := c.DefaultQuery("order", "desc")        // Sorting order
+	q := c.Query("q")                            // Search query
+	categories := c.QueryArray("categories")     // Selected categories
+	difficulties := c.QueryArray("difficulties") // Selected difficulties
+	sort := c.DefaultQuery("sort", "stats")      // Sorting column
+	order := c.DefaultQuery("order", "desc")     // Sorting order
 
 	// Construct query parameters object
 	params := model.QuestionQueryParams{
@@ -90,7 +87,7 @@ func (h *QuestionHandler) GetAllQuestions(c *gin.Context) {
 	// Call the service layer
 	questions, err := h.Service.GetAllQuestions(params)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		LogAndRespondError(c, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -98,18 +95,17 @@ func (h *QuestionHandler) GetAllQuestions(c *gin.Context) {
 	c.JSON(http.StatusOK, questions)
 }
 
-
 // UpdateQuestion updates an existing question
 func (h *QuestionHandler) UpdateQuestion(c *gin.Context) {
 	id := c.Param("id")
 	var question model.Question
 	if err := c.ShouldBindJSON(&question); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		LogAndRespondError(c, err, http.StatusBadRequest)
 		return
 	}
 	updatedQuestion, err := h.Service.UpdateQuestion(id, question)
 	if err != nil {
-		HandleError(c, err)
+		LogAndRespondError(c, err, http.StatusInternalServerError)
 		return
 	}
 	c.JSON(http.StatusOK, updatedQuestion)
@@ -119,9 +115,8 @@ func (h *QuestionHandler) UpdateQuestion(c *gin.Context) {
 func (h *QuestionHandler) DeleteQuestion(c *gin.Context) {
 	id := c.Param("id")
 	err := h.Service.DeleteQuestion(id)
-
 	if err != nil {
-		HandleError(c, err)
+		LogAndRespondError(c, err, http.StatusInternalServerError)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "Question deleted"})
@@ -132,12 +127,12 @@ func (h *QuestionHandler) TestQuestion(c *gin.Context) {
 	id := c.Param("id")
 	var submission model.Submission
 	if err := c.ShouldBindJSON(&submission); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		LogAndRespondError(c, err, http.StatusBadRequest)
 		return
 	}
 	result, err := h.Service.TestQuestion(id, submission)
 	if err != nil {
-		HandleError(c, err)
+		LogAndRespondError(c, err, http.StatusInternalServerError)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"output": result})
@@ -148,31 +143,27 @@ func (h *QuestionHandler) GetFunctionSignature(c *gin.Context) {
 	id := c.Param("id")
 	language := c.Query("language")
 	if language == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Language parameter is required"})
+		LogAndRespondError(c, fmt.Errorf("Language parameter is required"), http.StatusBadRequest)
 		return
 	}
 
 	// Map lowercase language to PredefinedSupportedLanguage
-	langEnum, err := utils.LowerToEnum(language)
+	langEnum, err := model.LowerToEnum(language)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid language parameter"})
+		LogAndRespondError(c, fmt.Errorf("Invalid language parameter"), http.StatusBadRequest)
 		return
 	}
 	// Fetch the question details
 	question, err := h.Service.GetQuestionByID(id)
 	if err != nil {
-		log.Printf("Error fetching question ID %s: %v", id, err)
-		HandleError(c, err)
+		LogAndRespondError(c, err, http.StatusInternalServerError)
 		return
 	}
 
 	// Generate the function signature
 	signature, err := coding.GenerateByQuestionAndLanguage(*question, langEnum)
 	if err != nil {
-		log.Printf("Error generating function signature for question ID %s and language %s: %v", id, language, err)
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("Failed to generate function signature for language %s: %s", language, err.Error()),
-		})
+		LogAndRespondError(c, fmt.Errorf("Failed to generate function signature for language %s: %s", language, err.Error()), http.StatusInternalServerError)
 		return
 	}
 
@@ -182,31 +173,24 @@ func (h *QuestionHandler) GetFunctionSignature(c *gin.Context) {
 	})
 }
 
-func HandleError(c *gin.Context, err error) {
-	// Retrieve the logger from the context
-	logger, exists := c.Get("logger")
-	if !exists {
-		// Fallback: Use a default logger
-		logger = zap.L()
-	}
-
-	// Log the error with contextual information
-	LogError(c, logger.(*zap.Logger), err, http.StatusInternalServerError, err.Error())
+func LogAndRespondError(c *gin.Context, err error, statusCode int) {
+	// Log the error using the middleware
+	c.Error(err) // Will be picked up by the middleware
 
 	// Respond with appropriate error message
-	if customErr, ok := err.(*utils.CustomError); ok {
+	if customErr, ok := err.(*model.CustomError); ok {
 		c.JSON(customErr.Code, gin.H{"error": customErr.Message})
 	} else {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+		c.JSON(statusCode, gin.H{"error": err.Error()})
 	}
 }
 
 func LogError(c *gin.Context, logger *zap.Logger, err error, statusCode int, message string) {
+	// Log the error with context
 	logger.Error("Error occurred",
 		zap.String("method", c.Request.Method),
 		zap.String("path", c.Request.URL.Path),
-		zap.Int("status", statusCode),
-		zap.String("client_ip", c.ClientIP()),
+		zap.String("request_id", c.GetString("request_id")),
 		zap.Error(err),
 	)
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/model"
-	"github.com/TehilaTheStudent/SkillCode-backend/internal/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -35,7 +34,6 @@ func NewQuestionRepository(db *mongo.Database) *QuestionRepository {
 // CreateQuestion inserts a new question into the database and returns the created question with its ID.
 func (r *QuestionRepository) CreateQuestion(question model.Question) (*model.Question, error) {
 
-
 	// Insert the question into the database
 	result, err := r.collection.InsertOne(context.Background(), question)
 	if err != nil {
@@ -56,7 +54,7 @@ func (r *QuestionRepository) GetQuestionByID(id primitive.ObjectID) (*model.Ques
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			// Return the custom "not found" error
-			return nil, utils.New(404, "Question not found for ID: "+id.Hex())
+			return nil, model.NewCustomError(404, "Question not found for ID: "+id.Hex())
 		}
 		// Return other errors as-is
 		return nil, err
@@ -87,12 +85,12 @@ func (r *QuestionRepository) GetAllQuestions() ([]model.Question, error) {
 func (r *QuestionRepository) UpdateQuestion(id primitive.ObjectID, question model.Question) (bool, error) {
 	updateResult, err := r.collection.UpdateOne(context.Background(), bson.M{"_id": id}, bson.M{"$set": question})
 	if err != nil {
-		return false, utils.ErrInternal
+		return false, model.ErrInternal
 	}
 
 	// Check if no document was matched
 	if updateResult.MatchedCount == 0 {
-		return false, utils.New(404, "Question not found with ID: "+id.Hex())
+		return false, model.NewCustomError(404, "Question not found with ID: "+id.Hex())
 	}
 
 	return true, nil
@@ -102,12 +100,12 @@ func (r *QuestionRepository) UpdateQuestion(id primitive.ObjectID, question mode
 func (r *QuestionRepository) DeleteQuestion(id primitive.ObjectID) (bool, error) {
 	deleteResult, err := r.collection.DeleteOne(context.Background(), bson.M{"_id": id})
 	if err != nil {
-		return false, utils.ErrInternal
+		return false, model.ErrInternal
 	}
 
 	// Check if no document was deleted
 	if deleteResult.DeletedCount == 0 {
-		return false, utils.New(404, "Question not found with ID: "+id.Hex())
+		return false, model.NewCustomError(404, "Question not found with ID: "+id.Hex())
 	}
 
 	return true, nil

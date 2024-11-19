@@ -7,8 +7,7 @@ import (
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/config"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/model"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/repository"
-	"github.com/TehilaTheStudent/SkillCode-backend/internal/testing"
-	"github.com/TehilaTheStudent/SkillCode-backend/internal/utils"
+	tester "github.com/TehilaTheStudent/SkillCode-backend/internal/testing"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -43,7 +42,7 @@ func (s *QuestionService) CreateQuestion(question model.Question) (*model.Questi
 func handleInvalidID(id string) (primitive.ObjectID, error) {
 	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return primitive.NilObjectID, utils.New(400, "Invalid ID: "+id)
+		return primitive.NilObjectID, model.NewCustomError(400, "Invalid ID: "+id)
 	}
 	return objID, nil
 }
@@ -194,7 +193,7 @@ func (s *QuestionService) TestQuestion(questionId string, submission model.Submi
 	//validations:
 	question, err := s.Repo.GetQuestionByID(objID)
 	if err != nil {
-		return "", utils.New(404, "Question not found with ID: "+questionId)
+		return "", model.NewCustomError(404, "Question not found with ID: "+questionId)
 	}
 	// Step 3: Prepare Python Test Runner
 	sandboxConfig, err := config.NewSandboxConfig(submission.Language)

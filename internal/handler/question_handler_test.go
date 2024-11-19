@@ -264,7 +264,7 @@ func TestGetQuestionByID_NotFound(t *testing.T) {
 	questionID := primitive.NewObjectID().Hex()
 	fmt.Println(questionID)
 	// Mock the service to return "no documents in result"
-	mockService.On("GetQuestionByID", questionID).Return(nil, utils.New(404, "Question not found with ID:")).Once()
+	mockService.On("GetQuestionByID", questionID).Return(nil, model.NewCustomError(404, "Question not found with ID:")).Once()
 
 	// Set up router
 	router := gin.Default()

@@ -9,6 +9,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/TehilaTheStudent/SkillCode-backend/internal/dependencies"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/utils"
 	"github.com/joho/godotenv"
 
@@ -18,7 +19,7 @@ import (
 var baseURL string
 
 func TestMain(m *testing.M) {
-	utils.EnsureWorkingDirectory()
+	dependencies.EnsureWorkingDirectory()
 	// Load environment variables
 	baseURL = os.Getenv("APP_URL")
 	if baseURL == "" {
@@ -27,7 +28,6 @@ func TestMain(m *testing.M) {
 		}
 
 		// Print loaded environment variables (optional for debugging)
-		log.Printf("Loaded environment: APP_URL=%s", os.Getenv("APP_URL"))
 		baseURL = os.Getenv("APP_URL")
 	}
 
