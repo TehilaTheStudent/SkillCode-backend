@@ -1,0 +1,17 @@
+{
+    "status": "overall status: succcess or fail",
+    "results": [
+        {
+            "status": "pass",
+            "expected_output": "2",
+            "actual_output": "2"
+        },
+        {
+            "status": "fail",
+            "expected_output": "-1",
+            "actual_output": "Error: target not found"
+        }
+    ],
+    "error": "if there is error, here is the type: [compilation | fail tests] ",
+    "details": "the output of the error"
+}

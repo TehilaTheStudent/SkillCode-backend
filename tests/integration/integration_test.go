@@ -38,12 +38,10 @@ func setupDatabase() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	// Load configuration
-	cfg := config.LoadConfigAPI()
 
 	// Connect to MongoDB
 	var err error
-	testDB, err = mongo.Connect(ctx, options.Client().ApplyURI(cfg.MongoDBURI))
+	testDB, err = mongo.Connect(ctx, options.Client().ApplyURI(config.GlobalConfigAPI.MongoDBURI))
 	if err != nil {
 		panic(err)
 	}

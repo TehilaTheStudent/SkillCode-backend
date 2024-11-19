@@ -1,0 +1,46 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "enum": ["success", "fail"],
+        "description": "Overall status of the process."
+      },
+      "results": {
+        "type": "array",
+        "description": "Array of individual test case results.",
+        "items": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": ["pass", "fail"],
+              "description": "The status of the individual test case."
+            },
+            "expected_output": {
+              "type": "string",
+              "description": "The expected output of the test case."
+            },
+            "actual_output": {
+              "type": "string",
+              "description": "The actual output of the test case."
+            }
+          },
+          "required": ["status", "expected_output", "actual_output"]
+        }
+      },
+      "error": {
+        "type": ["string", "null"],
+        "enum": ["compilation", "fail tests", null],
+        "description": "Error type if present: compilation or fail tests."
+      },
+      "details": {
+        "type": ["string", "null"],
+        "description": "Detailed description of the error if applicable."
+      }
+    },
+    "required": ["status", "results"],
+    "additionalProperties": false
+  }
+  

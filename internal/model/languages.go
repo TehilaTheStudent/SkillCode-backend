@@ -25,6 +25,36 @@ func GetFileExtension(language PredefinedSupportedLanguage) string {
 	}
 }
 
+
+func GetRuntime(language PredefinedSupportedLanguage) string{
+	switch language {
+    case Python:
+        return "python3"
+    case JavaScript:
+        return "node"
+    case Java:
+        return "java"
+    case Go:
+        return "go"
+    case CSharp:
+        return "mono-runtime"
+    case Cpp:
+        return "g++"
+    default:
+        return "" // Unsupported language
+    }
+}
+
+
+var PredefinedSupportedLanguages = []PredefinedSupportedLanguage{
+	Python,
+	JavaScript,
+	Java,
+	Go,
+	CSharp,
+	Cpp,
+}
+
 func LowerToEnum(language string) (PredefinedSupportedLanguage, error) {
 	// Convert language to lowercase
 	language = strings.ToLower(language)

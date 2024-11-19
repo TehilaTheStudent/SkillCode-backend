@@ -13,31 +13,58 @@ import (
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/utils"
 )
 
-func TestUserSolution(question *model.Question, userFunction string, language model.PredefinedSupportedLanguage, config config.ConfigSandbox) (string, error) {
+func TestUserSolution(question *model.Question, userFunction string, language model.PredefinedSupportedLanguage, cfg config.ConfigSandbox) (string, error) {
 	tester := NewTester()
 
+	// Development mode: Simulate local execution
+	if config.GlobalConfigAPI.ModeEnv == "development" {
+		// Command to execute the file locally
+		runTime := model.GetRuntime(language)
+		var cmdArgs []string
+		switch language {
+		case model.Python:
+			cmdArgs = []string{runTime, cfg.TestUserCodePath}
+			break
+		case model.JavaScript:
+			cmdArgs = []string{runTime, cfg.TestUserCodePath}
+			break
+		default:
+			return "", model.NewCustomError(400, "unsupported language")
+		}
+
+		// Capture the command's standard output and error
+		stdout, err := utils.RunCommand(cmdArgs[0], cmdArgs[1:]...)
+		if err != nil {
+			return "", model.NewCustomError(500, fmt.Sprintf("failed to execute local file: %v", err))
+		}
+
+		return stdout, nil
+	}
+
+	// Production or other environments: Use Docker and Kubernetes
 	defer func() {
-		if err := tester.CleanUp(config.PodName, config.ImageName); err != nil {
+		if err := tester.CleanUp(cfg.PodName, cfg.ImageName); err != nil {
+			fmt.Println("Failed to clean up resources:", err)
 		}
 	}()
 
 	// 1. Build Docker image
-	if err := tester.BuildDockerImage(config.ImageName, config.DockerFilePath); err != nil {
+	if err := tester.BuildDockerImage(cfg.ImageName, cfg.DockerFilePath); err != nil {
 		return "", model.NewCustomError(500, fmt.Sprintf("failed to build Docker image: %v", err))
 	}
 
 	// 2. Load Docker image into Kind
-	if err := tester.LoadImageIntoKind(config.ImageName, config.ClusterName); err != nil {
+	if err := tester.LoadImageIntoKind(cfg.ImageName, cfg.ClusterName); err != nil {
 		return "", model.NewCustomError(500, fmt.Sprintf("failed to load image into Kind: %v", err))
 	}
 
 	// 3. Deploy the pod
-	if err := tester.DeployPod(config.PodName, config.PodFilePath); err != nil {
+	if err := tester.DeployPod(cfg.PodName, cfg.PodFilePath); err != nil {
 		return "", model.NewCustomError(500, fmt.Sprintf("failed to deploy pod: %v", err))
 	}
 
 	// 4. Retrieve pod logs
-	logs, err := tester.GetPodLogs(config.PodName)
+	logs, err := tester.GetPodLogs(cfg.PodName)
 	if err != nil {
 		return "", model.NewCustomError(500, fmt.Sprintf("failed to get pod logs: %v", err))
 	}

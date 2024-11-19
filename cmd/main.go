@@ -2,8 +2,6 @@ package main
 
 import (
 	"fmt"
-	"time"
-
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/config"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/dependencies"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/handler"
@@ -12,53 +10,55 @@ import (
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/service"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
+	"os"
 )
 
 func main() {
-	// Ensure the working directory is correct
-	dependencies.EnsureWorkingDirectory()
 	// Initialize the logger
-	logger := config.InitLogger()
+	logger, err := config.InitLogger()
+	if err != nil {
+		os.Exit(1)
+	}
 	// Load the configuration
-	cfg := config.LoadConfigAPI()
-
-	// Initialize the database connection and start health checks
-	initializeDatabase(cfg, logger)
+	err = config.InitGlobalConfigs()
+	if err != nil {
+		logger.Fatal("Failed to initialize configuration", zap.Error(err))
+	}
+	// Setup all dependencies
+	err = dependencies.SetupAllDependencies()
+	if err != nil {
+		logger.Fatal("Failed to setup dependencies", zap.Error(err))
+	}
 	// Initialize handlers
-	questionHandler := initializeHandlers(cfg)
+	questionHandler := initializeHandlers()
 
 	// Setup the router with middlewares and routes
-	r := setupRouter(logger, cfg, questionHandler)
+	r := setupRouter(logger, questionHandler)
 
 	// Start the server
-	startServer(r, logger, cfg)
+	logger.Info("Starting server on port", zap.String("port", config.GlobalConfigAPI.Port))
+	if err := startServer(r); err != nil {
+		logger.Fatal("Failed to run server", zap.Error(err))
+	}
 }
 
-// initializeDatabase sets up the database connection and starts health checks
-func initializeDatabase(cfg *config.ConfigAPI, logger *zap.Logger) {
-	dependencies.ConnectMongoDB(cfg.MongoDBURI, logger)
-	dependencies.StartBackgroundHealthCheck(logger, 30*time.Second)
-}
-
-// initializeHandlers sets up the handlers for the application
-func initializeHandlers(cfg *config.ConfigAPI) *handler.QuestionHandler {
-	questionRepo := repository.NewQuestionRepository(dependencies.Client.Database(cfg.DBName))
+// initializeHandlers sets up the handlers for the application (repository<-service<-handler)
+// this is the dependency injection
+func initializeHandlers() *handler.QuestionHandler {
+	questionRepo := repository.NewQuestionRepository(dependencies.Client.Database(config.GlobalConfigAPI.DBName))
 	questionService := service.NewQuestionService(questionRepo)
 	return handler.NewQuestionHandler(questionService)
 }
 
-// setupRouter configures the router with middlewares and routes
-func setupRouter(logger *zap.Logger, cfg *config.ConfigAPI, questionHandler *handler.QuestionHandler) *gin.Engine {
+// setupRouter configures the router with middlewares and routes fron ; questions, code, config
+func setupRouter(logger *zap.Logger, questionHandler *handler.QuestionHandler) *gin.Engine {
 	r := gin.Default() //logs every request to the terminal
-	middleware.SetupMiddlewares(r, logger, cfg.FrontendURL)
+	middleware.SetupMiddlewares(r, logger, config.GlobalConfigAPI.FrontendURL)
 	handler.RegisterRoutes(r, questionHandler)
 	return r
 }
 
 // startServer starts the HTTP server
-func startServer(r *gin.Engine, logger *zap.Logger, cfg *config.ConfigAPI) {
-	logger.Info("Starting server", zap.String("port", cfg.Port))
-	if err := r.Run(fmt.Sprintf(":%s", cfg.Port)); err != nil {
-		logger.Fatal("Failed to run server", zap.Error(err))
-	}
+func startServer(r *gin.Engine) error {
+	return r.Run(fmt.Sprintf(":%s", config.GlobalConfigAPI.Port))
 }

@@ -26,6 +26,7 @@ Itay: " if there is a feature you didnt implement, tell me, so i wont have to gu
 ### Requirements/ resources needed to run the platform
 
 - enviroment variables??? configuration files?
+- toggle env MODE_ENV for local/sandboxed testing (couse sandboxed takes forever)
 - docker installed
 - ports-
   - MongoDB: `27017`
@@ -108,6 +109,9 @@ All endpoints are prefixed with:
 | ------ | -------------------------- | -------------------------------------- |
 | `GET`  | `/questions/:id/signature` | Get function signature for a question. |
 
+### here i will include explanations of the status codes returned
+
+
 #### my personal notes
 
 ### so what did i do here?
@@ -115,9 +119,13 @@ All endpoints are prefixed with:
 - mongo database
 - design of the question entity
 - go & gin backend
--
 - nuxt frontend
 
 ## TODOS:
 
 - google docs about the UI [[UI NOTES](https://docs.google.com/document/d/1ALAKcifoX5DRHbdMJkeR07SC64mj_ZiGxcPbDIpEtEw/edit?usp=sharing)]
+
+
+### issues im aware of
+### things i would implement ASAP
+### overview exlanation of directory structure

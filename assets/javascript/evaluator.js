@@ -1,6 +1,6 @@
 function parseInput(inputString) {
   try {
-    return JSON.parse(inputString); // Safer than eval
+    return JSON.parse(inputString); // Safely parse JSON input
   } catch (e) {
     return `Error parsing input: ${e.message}`;
   }
@@ -20,7 +20,11 @@ function runTestCases(userFunction, testCases) {
 
       // Compare outputs
       if (JSON.stringify(actualOutput) === JSON.stringify(expectedOutput)) {
-        results.push({ status: "pass" });
+        results.push({
+          status: "pass",
+          expected_output: expectedOutput,
+          actual_output: actualOutput,
+        });
       } else {
         results.push({
           status: "fail",
@@ -38,7 +42,12 @@ function runTestCases(userFunction, testCases) {
     }
   }
 
-  return results;
+  return {
+    status: "success",
+    results,
+    error: null,
+    details: null,
+  };
 }
 
 function evaluateUserCode(userCode, testCases, functionName) {
@@ -48,21 +57,33 @@ function evaluateUserCode(userCode, testCases, functionName) {
     const utils = require('./ds_utils.js');
     ${userCode}
     return ${functionName};
-`;
+    `;
 
+    // Safely wrap and execute user code
     userFunction = new Function("require", wrappedCode)(require);
   } catch (e) {
-    return { error: "Compilation failed", details: e.message };
+    return {
+      status: "fail",
+      results: [],
+      error: "Compilation failed",
+      details: e.message,
+    };
   }
 
   if (typeof userFunction !== "function") {
-    return { error: `${functionName} is not defined or not a function` };
+    return {
+      status: "fail",
+      results: [],
+      error: `${functionName} is not defined or not a function`,
+      details: null,
+    };
   }
 
-  // Step 2: Run test cases
+  // Run test cases
   return runTestCases(userFunction, testCases);
 }
 
+// Example usage
 const userCode = `function binarySearch(arr, target) {
     let left = 0, right = arr.length - 1;
     w

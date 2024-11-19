@@ -26,7 +26,7 @@ questions = [
         "title": "Return 1",
         "description": "Write a function that always returns the number 1.",
         "difficulty": "Easy",
-        "category": "Simple",
+        "category": "Matrix",
         "examples": [
             {
                 "parameters": [],
@@ -55,7 +55,7 @@ questions = [
         "title": "Sum of Two Numbers",
         "description": "Write a function that takes two numbers and returns their sum.",
         "difficulty": "Easy",
-        "category": "Math",
+        "category": "LinkedList",
         "examples": [
             {
                 "parameters": ["2", "3"],
@@ -134,7 +134,7 @@ questions = [
         "title": "Factorial",
         "description": "Write a function that calculates the factorial of a given number.",
         "difficulty": "Medium",
-        "category": "Math",
+        "category": "LinkedList",
         "examples": [
             {
                 "parameters": ["5"],

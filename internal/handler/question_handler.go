@@ -9,7 +9,6 @@ import (
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/model"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/service"
 	"github.com/gin-gonic/gin"
-	"go.uber.org/zap"
 	// "github.com/go-playground/validator"
 )
 
@@ -25,7 +24,7 @@ func NewQuestionHandler(service service.QuestionServiceInterface) *QuestionHandl
 
 // RegisterQuestionRoutes sets up the routes for question-related endpoints
 func RegisterQuestionRoutes(r *gin.Engine, handler *QuestionHandler) {
-	appGroup := r.Group(config.LoadConfigAPI().Base)
+	appGroup := r.Group(config.GlobalConfigAPI.Base)
 	appGroup.POST("/questions", handler.CreateQuestion)
 	appGroup.GET("/questions/:id", handler.GetQuestionByID)
 	appGroup.GET("/questions", handler.GetAllQuestions)
@@ -135,7 +134,8 @@ func (h *QuestionHandler) TestQuestion(c *gin.Context) {
 		LogAndRespondError(c, err, http.StatusInternalServerError)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"output": result})
+	// Set Content-Type to application/json and send the result directly
+	c.Data(http.StatusOK, "application/json", []byte(result))
 }
 
 func (h *QuestionHandler) GetFunctionSignature(c *gin.Context) {
@@ -183,14 +183,4 @@ func LogAndRespondError(c *gin.Context, err error, statusCode int) {
 	} else {
 		c.JSON(statusCode, gin.H{"error": err.Error()})
 	}
-}
-
-func LogError(c *gin.Context, logger *zap.Logger, err error, statusCode int, message string) {
-	// Log the error with context
-	logger.Error("Error occurred",
-		zap.String("method", c.Request.Method),
-		zap.String("path", c.Request.URL.Path),
-		zap.String("request_id", c.GetString("request_id")),
-		zap.Error(err),
-	)
 }

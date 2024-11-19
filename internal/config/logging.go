@@ -1,14 +1,13 @@
 package config
 
 import (
+	"fmt"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
-
-
-func InitLogger() *zap.Logger {
+func InitLogger() (*zap.Logger, error) {
 	// Set up log rotation with lumberjack
 	logFile := &lumberjack.Logger{
 		Filename:   "./logs/app.log", // Log file path
@@ -36,6 +35,14 @@ func InitLogger() *zap.Logger {
 		zapcore.DebugLevel,                       // Log level (capture everything in development)
 	)
 
-	// Create and return the logger
-	return zap.New(core, zap.AddCaller())
+	// Create the logger
+	logger := zap.New(core, zap.AddCaller())
+
+	// Check if logger is nil
+	if logger == nil {
+		return nil, fmt.Errorf("failed to initialize logger")
+	}
+
+	// Return the logger and nil error
+	return logger, nil
 }

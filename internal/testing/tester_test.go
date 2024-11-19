@@ -17,10 +17,8 @@ func TestTester(t *testing.T) {
 
 	// Generate the user function body for Python
 	userFunctionPython := utils.GenerateUserFunction("python", nil)
-	sandboxConfig, err := config.NewSandboxConfig(model.CSharp)
-	if err != nil {
-		return 
-	}
+	sandboxConfig := config.GlobalConfigSandboxes[model.CSharp]
+	
 	// Test the user solution by generating and running the test harness
 	results, err := tester.TestUserSolution(&question, userFunctionPython.Code,userFunctionPython.Language, *sandboxConfig)
 	if err != nil {

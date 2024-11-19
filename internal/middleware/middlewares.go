@@ -14,33 +14,36 @@ import (
 // Middleware defines a function to process middleware
 type Middleware func(*gin.Engine)
 
-// setupMiddlewares adds required middlewares to the Gin router
 func SetupMiddlewares(r *gin.Engine, logger *zap.Logger, frontendURL string) {
-	middlewares := []Middleware{
-		injectLogger(logger),
-		addCORS(frontendURL),
-	}
-	r.Use(HealthMiddleware())
-	r.Use(RequestIDMiddleware())
-	r.Use(RequestLogger(logger))
+	// Global middlewares
+	r.Use(RequestIDMiddleware())          // Add unique request ID
+	r.Use(RequestLogger(logger))          // Log request details
+	r.Use(ErrorLoggingMiddleware(logger)) // Log errors after processing
+	r.Use(HealthMiddleware())             // Block unhealthy requests
 
-	for _, middleware := range middlewares {
-		middleware(r)
-	}
-}
-
-// injectLogger returns a middleware to inject logger into Gin context
-func injectLogger(logger *zap.Logger) Middleware {
-	return func(r *gin.Engine) {
-		r.Use(func(c *gin.Context) {
-			c.Set("logger", logger.With(
-				zap.String("request_id", c.Request.Header.Get("X-Request-ID")), // Add request ID context
-			))
-			c.Next()
+	// CORS middleware
+	r.Use(func(c *gin.Context) {
+		corsMiddleware := cors.New(cors.Options{
+			AllowOriginFunc: func(origin string) bool {
+				return origin == frontendURL
+			},
+			AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodDelete, http.MethodPut, http.MethodOptions},
+			AllowCredentials: true,
+			AllowedHeaders:   []string{"Origin", "Content-Type", "Authorization"},
+			MaxAge:           int(12 * time.Hour / time.Second),
 		})
-	}
-}
+		corsMiddleware.HandlerFunc(c.Writer, c.Request)
+		c.Next()
+	})
 
+	// Inject logger into context
+	r.Use(func(c *gin.Context) {
+		c.Set("logger", logger.With(
+			zap.String("request_id", c.GetString("request_id")),
+		))
+		c.Next()
+	})
+}
 
 func RequestLogger(logger *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -57,25 +60,6 @@ func RequestLogger(logger *zap.Logger) gin.HandlerFunc {
 			zap.Int("status", c.Writer.Status()),
 			zap.Duration("latency", time.Since(start)),
 		)
-	}
-}
-
-// addCORS returns a middleware to add CORS with custom logic to allow the frontend
-func addCORS(frontendURL string) Middleware {
-	return func(r *gin.Engine) {
-		corsMiddleware := cors.New(cors.Options{
-			AllowOriginFunc: func(origin string) bool {
-				return origin == frontendURL
-			},
-			AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodDelete, http.MethodPut, http.MethodOptions},
-			AllowCredentials: true,
-			AllowedHeaders:   []string{"Origin", "Content-Type", "Authorization"},
-			MaxAge:           int(12 * time.Hour / time.Second),
-		})
-		r.Use(func(c *gin.Context) {
-			corsMiddleware.HandlerFunc(c.Writer, c.Request)
-			c.Next()
-		})
 	}
 }
 
@@ -103,7 +87,6 @@ func HealthMiddleware() gin.HandlerFunc {
 	}
 }
 
-
 func ErrorLoggingMiddleware(logger *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Process the request
@@ -116,6 +99,7 @@ func ErrorLoggingMiddleware(logger *zap.Logger) gin.HandlerFunc {
 				zap.String("method", c.Request.Method),
 				zap.String("path", c.Request.URL.Path),
 				zap.String("client_ip", c.ClientIP()),
+				zap.String("request_id", c.GetString("request_id")), // Log request ID
 				zap.String("error", err.Err.Error()),
 			)
 		}

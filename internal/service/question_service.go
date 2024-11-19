@@ -60,7 +60,7 @@ func (s *QuestionService) GetAllQuestions(params model.QuestionQueryParams) ([]m
 	// Fetch all questions from the repository
 	questions, err := s.Repo.GetAllQuestions()
 	if err != nil {
-		return nil, err
+		return []model.Question{}, err
 	}
 
 	// Apply filtering
@@ -78,7 +78,9 @@ func (s *QuestionService) GetAllQuestions(params model.QuestionQueryParams) ([]m
 
 	// Apply sorting
 	questions = sortQuestions(questions, params.SortField, params.SortOrder)
-
+	if questions == nil {
+		questions = []model.Question{}
+	}
 	return questions, nil
 }
 
@@ -196,11 +198,9 @@ func (s *QuestionService) TestQuestion(questionId string, submission model.Submi
 		return "", model.NewCustomError(404, "Question not found with ID: "+questionId)
 	}
 	// Step 3: Prepare Python Test Runner
-	sandboxConfig, err := config.NewSandboxConfig(submission.Language)
-	if err != nil {
-		return "", err
-	}
-	testRunnerPath := sandboxConfig.UserCodePath
+	sandboxConfig := config.GlobalConfigSandboxes[submission.Language]
+
+	testRunnerPath := sandboxConfig.TestUserCodePath
 	err = tester.CreateTestRunner(submission.Language, testRunnerPath, *question, submission.Code)
 	if err != nil {
 		return "", err

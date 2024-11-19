@@ -2,4 +2,5 @@
 .devcontainer/
 # env.sh
 logs/
-assets/javascript/node_modules/
+
+assets/python/__pycache__/

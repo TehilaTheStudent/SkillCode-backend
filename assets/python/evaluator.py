@@ -1,4 +1,6 @@
 import ast
+import json
+from jsonschema import validate, ValidationError
 
 def parse_input(input_string):
     try:
@@ -13,11 +15,11 @@ def run_test_cases(compiled_code, test_cases, function_name):
     try:
         exec(compiled_code, namespace)  # Execute user code in a separate namespace
     except Exception as e:
-        return {"error": "Execution failed", "details": str(e)}
+        return {"status": "fail", "error": "Execution failed", "details": str(e), "results": []}
 
     user_function = namespace.get(function_name)
     if not callable(user_function):
-        return {"error": f"{function_name} is not defined or callable"}
+        return {"status": "fail", "error": f"{function_name} is not defined or callable", "details": None, "results": []}
 
     for case in test_cases:
         try:
@@ -30,38 +32,50 @@ def run_test_cases(compiled_code, test_cases, function_name):
 
             # Compare outputs
             if actual_output == expected_output:
-                results.append({"status": "pass"})
+                results.append({"status": "pass", "expected_output": str(expected_output), "actual_output": str(actual_output)})
             else:
                 results.append({
                     "status": "fail",
-                    "expected_output": expected_output,
-                    "actual_output": actual_output,
+                    "expected_output": str(expected_output),
+                    "actual_output": str(actual_output),
                 })
         except Exception as e:
             # Handle errors in execution
             results.append({
                 "status": "fail",
-                "expected_output": case["expected_output"],
+                "expected_output": str(case["expected_output"]),
                 "actual_output": f"Error: {str(e)}",
             })
 
-    return results
+    return {"status": "success", "results": results, "error": None, "details": None}
 
 
-def evaluate_user_code(user_code, test_cases, function_name):
+def evaluate_user_code(user_code, test_cases, function_name, schema_path="feedback_schema.json"):
     # Step 1: Compile the user's code
-    user_code="import ds_utils as utils\n"+user_code
+    user_code = "import ds_utils as utils\n" + user_code
     try:
         compiled_code = compile(user_code, filename="<user_code>", mode="exec")
     except SyntaxError as e:
-        return {"error": "Compilation failed", "details": str(e)}
+        return {"status": "fail", "error": "Compilation failed", "details": str(e), "results": []}
 
     # Step 2: Run test cases
     results = run_test_cases(compiled_code, test_cases, function_name)
+
+    # Step 3: Validate against schema
+    with open(schema_path, "r") as schema_file:
+        schema = json.load(schema_file)
+
+    try:
+        validate(instance=results, schema=schema)
+        print("Validation passed!")
+    except ValidationError as e:
+        print(f"Validation failed: {e.message}")
+        return {"status": "fail", "error": "Validation failed", "details": e.message, "results": []}
+
     return results
 
+
 if __name__ == "__main__":
-   
     # Example Usage:
     user_code = """
 def binarySearch(arr, target):
@@ -86,6 +100,3 @@ def binarySearch(arr, target):
 
     results = evaluate_user_code(user_code, test_cases, function_name)
     print(results)
-
-
-    # end of example usage
