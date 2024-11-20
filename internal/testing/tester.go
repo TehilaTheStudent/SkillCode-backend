@@ -2,6 +2,7 @@ package tester
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -13,58 +14,76 @@ import (
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/utils"
 )
 
-func TestUserSolution(question *model.Question, userFunction string, language model.PredefinedSupportedLanguage, cfg config.ConfigSandbox) (string, error) {
+func TestUserSolution(question *model.Question, userFunction string, language model.PredefinedSupportedLanguage, cfg config.ConfigSandbox) (*model.Feedback, error) {
 	tester := NewTester()
 
 	// Development mode: Simulate local execution
+	var rawLogs string
+	var err error
 	if config.GlobalConfigAPI.ModeEnv == "development" {
-		// Command to execute the file locally
-		runTime := model.GetRuntime(language)
-		var cmdArgs []string
-		switch language {
-		case model.Python:
-			cmdArgs = []string{runTime, cfg.TestUserCodePath}
-			break
-		case model.JavaScript:
-			cmdArgs = []string{runTime, cfg.TestUserCodePath}
-			break
-		default:
-			return "", model.NewCustomError(400, "unsupported language")
-		}
-
-		// Capture the command's standard output and error
-		stdout, err := utils.RunCommand(cmdArgs[0], cmdArgs[1:]...)
-		if err != nil {
-			return "", model.NewCustomError(500, fmt.Sprintf("failed to execute local file: %v", err))
-		}
-
-		return stdout, nil
+		rawLogs, err = tester.executeLocally(language, cfg)
+	} else {
+		rawLogs, err = tester.executeWithDockerAndK8s(cfg)
 	}
 
-	// Production or other environments: Use Docker and Kubernetes
+	if err != nil {
+		return nil, err
+	}
+
+	// Parse JSON logs into Feedback struct
+	var feedback model.Feedback
+	if parseErr := json.Unmarshal([]byte(rawLogs), &feedback); parseErr != nil {
+		return nil, model.NewCustomError(500, fmt.Sprintf("failed to parse feedback logs: %v", parseErr))
+	}
+
+	return &feedback, nil
+}
+func (t *Tester) executeLocally(language model.PredefinedSupportedLanguage, cfg config.ConfigSandbox) (string, error) {
+	runTime := model.GetRuntime(language)
+	var cmdArgs []string
+	switch language {
+	case model.Python:
+		cmdArgs = []string{runTime, cfg.TestUserCodePath}
+	case model.JavaScript:
+		cmdArgs = []string{runTime, cfg.TestUserCodePath}
+	default:
+		return "", model.NewCustomError(400, "unsupported language")
+	}
+
+	// Capture the command's standard output and error
+	stdout, err := utils.RunCommand(cmdArgs[0], cmdArgs[1:]...)
+	if err != nil {
+		return "", model.NewCustomError(500, fmt.Sprintf("failed to execute local file: %v", err))
+	}
+
+	return stdout, nil
+}
+
+// Encapsulate the existing Docker and Kubernetes logic into a helper function
+func (t *Tester) executeWithDockerAndK8s(cfg config.ConfigSandbox) (string, error) {
 	defer func() {
-		if err := tester.CleanUp(cfg.PodName, cfg.ImageName); err != nil {
+		if err := t.CleanUp(cfg.PodName, cfg.ImageName); err != nil {
 			fmt.Println("Failed to clean up resources:", err)
 		}
 	}()
 
 	// 1. Build Docker image
-	if err := tester.BuildDockerImage(cfg.ImageName, cfg.DockerFilePath); err != nil {
+	if err := t.BuildDockerImage(cfg.ImageName, cfg.DockerFilePath); err != nil {
 		return "", model.NewCustomError(500, fmt.Sprintf("failed to build Docker image: %v", err))
 	}
 
 	// 2. Load Docker image into Kind
-	if err := tester.LoadImageIntoKind(cfg.ImageName, cfg.ClusterName); err != nil {
+	if err := t.LoadImageIntoKind(cfg.ImageName, cfg.ClusterName); err != nil {
 		return "", model.NewCustomError(500, fmt.Sprintf("failed to load image into Kind: %v", err))
 	}
 
 	// 3. Deploy the pod
-	if err := tester.DeployPod(cfg.PodName, cfg.PodFilePath); err != nil {
+	if err := t.DeployPod(cfg.PodName, cfg.PodFilePath); err != nil {
 		return "", model.NewCustomError(500, fmt.Sprintf("failed to deploy pod: %v", err))
 	}
 
 	// 4. Retrieve pod logs
-	logs, err := tester.GetPodLogs(cfg.PodName)
+	logs, err := t.GetPodLogs(cfg.PodName)
 	if err != nil {
 		return "", model.NewCustomError(500, fmt.Sprintf("failed to get pod logs: %v", err))
 	}

@@ -24,16 +24,14 @@ func CreateTestRunner(language model.PredefinedSupportedLanguage, path string, q
 
 func CreatePythonTestRunner(path string, question model.Question, userCode string) error {
 	testCasesJSON, _ := json.Marshal(question.TestCases)
-	content := fmt.Sprintf(
-		`from evaluator import evaluate_user_code
-import ds_utils as utils
-
+	content := fmt.Sprintf(`from evaluator import evaluate_user_code
+import json
 user_code = """%s"""
 test_cases = %s
 function_name = "%s"
 
 results = evaluate_user_code(user_code, test_cases, function_name)
-print(results)`,
+print(json.dumps(results, indent=2))`,
 		userCode, string(testCasesJSON), question.FunctionConfig.Name,
 	)
 
@@ -52,8 +50,6 @@ func CreateJavaScriptTestRunner(path string, question model.Question, userCode s
 	backtick:="`"
 	// Generate the test runner content with proper escaping
 	content := fmt.Sprintf(`const { evaluateUserCode } = require('./evaluator.js');
-const utils = require('./ds_utils.js');
-
 const userCode = %s%s%s;
 
 const testCases = %s;

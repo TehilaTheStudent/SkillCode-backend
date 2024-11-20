@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 	"os"
 
@@ -12,22 +13,16 @@ import (
 
 // ServeUtils serves the utilities file based on the language query parameter
 func ServeUtils(c *gin.Context) {
-	language :=  c.Query("language")
-	var filePath string
-	
-	switch language {
-	case "python":
-		filePath = config.GlobalConfigSandboxes[model.Python].UtilsFile + ".py"
-	case "javascript":
-		filePath = config.GlobalConfigSandboxes[model.JavaScript].UtilsFile + ".js"
-	default:
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Unsupported language"})
+	language, err := model.LowerToEnum(c.Query("language"))
+	if err != nil {
+		LogAndRespondError(c, errors.New("invalid language"), http.StatusBadRequest)
 		return
 	}
+	filePath := config.GlobalConfigSandboxes[language].UtilsFile
 
 	content, err := os.ReadFile(filePath)
-	if (err != nil) {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read file"})
+	if err != nil {
+		LogAndRespondError(c, errors.New("failed to read file: " + filePath), http.StatusInternalServerError)
 		return
 	}
 	c.Data(http.StatusOK, "text/plain", content)

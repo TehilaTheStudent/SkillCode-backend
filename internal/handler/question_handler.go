@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -124,18 +125,30 @@ func (h *QuestionHandler) DeleteQuestion(c *gin.Context) {
 // TestQuestion simulates running a user-provided function against test cases for a question.
 func (h *QuestionHandler) TestQuestion(c *gin.Context) {
 	id := c.Param("id")
+
+	// Bind the incoming JSON request to the Submission struct
 	var submission model.Submission
 	if err := c.ShouldBindJSON(&submission); err != nil {
 		LogAndRespondError(c, err, http.StatusBadRequest)
 		return
 	}
-	result, err := h.Service.TestQuestion(id, submission)
+
+	// Call the service to test the question and get the feedback
+	feedback, err := h.Service.TestQuestion(id, submission)
 	if err != nil {
 		LogAndRespondError(c, err, http.StatusInternalServerError)
 		return
 	}
-	// Set Content-Type to application/json and send the result directly
-	c.Data(http.StatusOK, "application/json", []byte(result))
+
+	// Serialize the Feedback struct to JSON
+	response, err := json.Marshal(feedback)
+	if err != nil {
+		LogAndRespondError(c, err, http.StatusInternalServerError)
+		return
+	}
+
+	// Set Content-Type to application/json and send the JSON response
+	c.Data(http.StatusOK, "application/json", response)
 }
 
 func (h *QuestionHandler) GetFunctionSignature(c *gin.Context) {
@@ -173,14 +186,3 @@ func (h *QuestionHandler) GetFunctionSignature(c *gin.Context) {
 	})
 }
 
-func LogAndRespondError(c *gin.Context, err error, statusCode int) {
-	// Log the error using the middleware
-	c.Error(err) // Will be picked up by the middleware
-
-	// Respond with appropriate error message
-	if customErr, ok := err.(*model.CustomError); ok {
-		c.JSON(customErr.Code, gin.H{"error": customErr.Message})
-	} else {
-		c.JSON(statusCode, gin.H{"error": err.Error()})
-	}
-}

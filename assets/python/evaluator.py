@@ -1,10 +1,12 @@
 import ast
 import json
+import os  # Add this for path manipulation
 from jsonschema import validate, ValidationError
+
 
 def parse_input(input_string):
     try:
-        return ast.literal_eval(input_string)  # Safer than eval()
+        return ast.literal_eval(input_string)  # Safely parse input
     except (ValueError, SyntaxError) as e:
         return f"Error parsing input: {str(e)}"
 
@@ -12,6 +14,7 @@ def parse_input(input_string):
 def run_test_cases(compiled_code, test_cases, function_name):
     results = []
     namespace = {}
+    all_passed = True  # Track if all test cases pass
     try:
         exec(compiled_code, namespace)  # Execute user code in a separate namespace
     except Exception as e:
@@ -19,7 +22,12 @@ def run_test_cases(compiled_code, test_cases, function_name):
 
     user_function = namespace.get(function_name)
     if not callable(user_function):
-        return {"status": "fail", "error": f"{function_name} is not defined or callable", "details": None, "results": []}
+        return {
+            "status": "fail",
+            "error": f"{function_name} is not defined or callable",
+            "details": None,
+            "results": [],
+        }
 
     for case in test_cases:
         try:
@@ -32,25 +40,44 @@ def run_test_cases(compiled_code, test_cases, function_name):
 
             # Compare outputs
             if actual_output == expected_output:
-                results.append({"status": "pass", "expected_output": str(expected_output), "actual_output": str(actual_output)})
+                results.append(
+                    {
+                        "status": "pass",
+                        "parameters": case["parameters"],  # Include parameters in the result
+                        "expected_output": str(expected_output),
+                        "actual_output": str(actual_output),
+                    }
+                )
             else:
-                results.append({
-                    "status": "fail",
-                    "expected_output": str(expected_output),
-                    "actual_output": str(actual_output),
-                })
+                all_passed = False  # Mark as failed if any test case fails
+                results.append(
+                    {
+                        "status": "fail",
+                        "parameters": case["parameters"],  # Include parameters in the result
+                        "expected_output": str(expected_output),
+                        "actual_output": str(actual_output),
+                    }
+                )
         except Exception as e:
-            # Handle errors in execution
-            results.append({
-                "status": "fail",
-                "expected_output": str(case["expected_output"]),
-                "actual_output": f"Error: {str(e)}",
-            })
+            all_passed = False  # Mark as failed if any test case raises an exception
+            results.append(
+                {
+                    "status": "fail",
+                    "parameters": case["parameters"],  # Include parameters in the result
+                    "expected_output": str(case["expected_output"]),
+                    "actual_output": f"Error: {str(e)}",
+                }
+            )
 
-    return {"status": "success", "results": results, "error": None, "details": None}
+    overall_status = "success" if all_passed else "fail"
+    return {"status": overall_status, "results": results, "error": None, "details": None}
 
 
-def evaluate_user_code(user_code, test_cases, function_name, schema_path="feedback_schema.json"):
+def evaluate_user_code(user_code, test_cases, function_name, schema_path="./feedback_schema.json"):
+    # Resolve the schema path relative to this script
+    script_dir = os.path.dirname(os.path.abspath(__file__))  # Get the script's directory
+    resolved_schema_path = os.path.join(script_dir, schema_path)  # Resolve schema path
+
     # Step 1: Compile the user's code
     user_code = "import ds_utils as utils\n" + user_code
     try:
@@ -62,14 +89,13 @@ def evaluate_user_code(user_code, test_cases, function_name, schema_path="feedba
     results = run_test_cases(compiled_code, test_cases, function_name)
 
     # Step 3: Validate against schema
-    with open(schema_path, "r") as schema_file:
-        schema = json.load(schema_file)
-
     try:
+        with open(resolved_schema_path, "r") as schema_file:
+            schema = json.load(schema_file)
         validate(instance=results, schema=schema)
-        print("Validation passed!")
+    except FileNotFoundError:
+        return {"status": "fail", "error": "FileNotFoundError", "details": f"Schema file not found at {resolved_schema_path}", "results": []}
     except ValidationError as e:
-        print(f"Validation failed: {e.message}")
         return {"status": "fail", "error": "Validation failed", "details": e.message, "results": []}
 
     return results
@@ -99,4 +125,4 @@ def binarySearch(arr, target):
     function_name = "binarySearch"
 
     results = evaluate_user_code(user_code, test_cases, function_name)
-    print(results)
+    print(json.dumps(results, indent=2))  # Pretty-print JSON results

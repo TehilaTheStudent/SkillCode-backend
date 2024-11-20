@@ -1,17 +1,20 @@
 {
-    "status": "overall status: succcess or fail",
+    "status": "overall status: success or fail",
     "results": [
-        {
-            "status": "pass",
-            "expected_output": "2",
-            "actual_output": "2"
-        },
-        {
-            "status": "fail",
-            "expected_output": "-1",
-            "actual_output": "Error: target not found"
-        }
+      {
+        "status": "pass",
+        "parameters": ["0"], 
+        "expected_output": "2",
+        "actual_output": "2"
+      },
+      {
+        "status": "fail",
+        "parameters": ["3"],
+        "expected_output": "-1",
+        "actual_output": "Error: target not found"
+      }
     ],
-    "error": "if there is error, here is the type: [compilation | fail tests] ",
+    "error": "if there is an error, here is the type: [compilation | fail tests | schema validation]",
     "details": "the output of the error"
-}
+  }
+  

@@ -18,7 +18,7 @@ type QuestionServiceInterface interface {
 	GetAllQuestions(params model.QuestionQueryParams) ([]model.Question, error)
 	UpdateQuestion(id string, question model.Question) (*model.Question, error)
 	DeleteQuestion(id string) error
-	TestQuestion(id string, solution model.Submission) (string, error)
+	TestQuestion(id string, solution model.Submission) (*model.Feedback, error)
 }
 
 type QuestionService struct {
@@ -187,15 +187,15 @@ func (s *QuestionService) DeleteQuestion(id string) error {
 }
 
 // TestQuestion simulates running a user-provided function against test cases for a question.
-func (s *QuestionService) TestQuestion(questionId string, submission model.Submission) (string, error) {
+func (s *QuestionService) TestQuestion(questionId string, submission model.Submission) (*model.Feedback, error) {
 	objID, err := handleInvalidID(questionId)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	//validations:
 	question, err := s.Repo.GetQuestionByID(objID)
 	if err != nil {
-		return "", model.NewCustomError(404, "Question not found with ID: "+questionId)
+		return nil, model.NewCustomError(404, "Question not found with ID: "+questionId)
 	}
 	// Step 3: Prepare Python Test Runner
 	sandboxConfig := config.GlobalConfigSandboxes[submission.Language]
@@ -203,11 +203,11 @@ func (s *QuestionService) TestQuestion(questionId string, submission model.Submi
 	testRunnerPath := sandboxConfig.TestUserCodePath
 	err = tester.CreateTestRunner(submission.Language, testRunnerPath, *question, submission.Code)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	output, err := tester.TestUserSolution(question, submission.Code, submission.Language, *sandboxConfig)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	return output, nil
 }

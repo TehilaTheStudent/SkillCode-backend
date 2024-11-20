@@ -1,9 +1,24 @@
 from evaluator import evaluate_user_code
-import ds_utils as utils
+import json
+user_code = """def is_palindrome(s: str) -> bool:
+    pass
 
-user_code = """def factorial(n: int) -> int:"""
-test_cases = [{"parameters":["0"],"expected_output":"1"},{"parameters":["3"],"expected_output":"6"},{"parameters":["7"],"expected_output":"5040"}]
-function_name = "factorial"
+
+
+
+
+
+
+
+
+
+
+
+
+
+"""
+test_cases = [{"parameters":["'madam'"],"expected_output":"true"},{"parameters":["'hello'"],"expected_output":"false"},{"parameters":["'A man a plan a canal Panama'"],"expected_output":"true"}]
+function_name = "isPalindrome"
 
 results = evaluate_user_code(user_code, test_cases, function_name)
-print(results)
+print(json.dumps(results, indent=2))

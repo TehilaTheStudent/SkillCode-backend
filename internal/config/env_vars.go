@@ -29,7 +29,7 @@ func newSandboxConfig(language model.PredefinedSupportedLanguage) (*ConfigSandbo
 	languageStr := strings.ToLower(string(language))
 	langDir := fmt.Sprintf("%s/%s", BaseDir, languageStr)
 	defaultPodFilePath := fmt.Sprintf("%s/pod.yaml", langDir)
-	UtilsFile := BaseDir + strings.ToLower(string(language)) + "/ds_utils." + model.GetFileExtension(language)
+	UtilsFile := fmt.Sprintf("%s/%s/ds_utils.%s", BaseDir, strings.ToLower(string(language)), model.GetFileExtension(language))
 	dockerFilePath := fmt.Sprintf("%s/Dockerfile", langDir)
 	TestUserCodePath := fmt.Sprintf("%s/run_tests.%s", langDir, model.GetFileExtension(language))
 

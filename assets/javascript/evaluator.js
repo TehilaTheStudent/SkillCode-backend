@@ -8,6 +8,7 @@ function parseInput(inputString) {
 
 function runTestCases(userFunction, testCases) {
   const results = [];
+  let allPassed = true;
 
   for (const testCase of testCases) {
     try {
@@ -22,20 +23,25 @@ function runTestCases(userFunction, testCases) {
       if (JSON.stringify(actualOutput) === JSON.stringify(expectedOutput)) {
         results.push({
           status: "pass",
+          parameters: testCase.parameters, // Include parameters in the result
           expected_output: expectedOutput,
           actual_output: actualOutput,
         });
       } else {
+        allPassed = false;
         results.push({
           status: "fail",
+          parameters: testCase.parameters, // Include parameters in the result
           expected_output: expectedOutput,
           actual_output: actualOutput,
         });
       }
     } catch (e) {
+      allPassed = false;
       // Handle errors in execution
       results.push({
         status: "fail",
+        parameters: testCase.parameters, // Include parameters in the result
         expected_output: testCase.expected_output,
         actual_output: `Error: ${e.message}`,
       });
@@ -43,7 +49,7 @@ function runTestCases(userFunction, testCases) {
   }
 
   return {
-    status: "success",
+    status: allPassed ? "success" : "fail",
     results,
     error: null,
     details: null,
@@ -86,9 +92,18 @@ function evaluateUserCode(userCode, testCases, functionName) {
 // Example usage
 const userCode = `function binarySearch(arr, target) {
     let left = 0, right = arr.length - 1;
-    w
+    while (left <= right) {
+        const mid = Math.floor((left + right) / 2);
+        if (arr[mid] === target) {
+            return mid;
+        } else if (arr[mid] < target) {
+            left = mid + 1;
+        } else {
+            right = mid - 1;
         }
-    }`;
+    }
+    return -1;
+}`;
 
 const testCases = [
   { parameters: ["[1, 2, 3, 4, 5]", "3"], expected_output: "2" },
