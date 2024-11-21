@@ -1,0 +1,37 @@
+name: Sync Files to SkillCode
+
+on:
+  push:
+    branches:
+      - main # Trigger the workflow on pushes to the main branch
+
+jobs:
+  sync-files:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the source repository (SkillCode-backend)
+      - name: Checkout SkillCode-backend Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Clone the target repository (SkillCode)
+      - name: Clone Target Repository (SkillCode)
+        run: |
+          git clone https://x-access-token:${{ secrets.TARGET_REPO_ACCESS_TOKEN }}@github.com/TehilaTheStudent/SkillCode.git target-repo
+
+      # Step 3: Copy specific files to the target repository
+      - name: Sync Files to Target Repository
+        run: |
+          cp docker-compose.yaml target-repo/
+          cp README.md target-repo/
+          cp -r seed_scripts/ target-repo/
+
+      # Step 4: Commit and push changes to the target repository
+      - name: Commit and Push Changes
+        run: |
+          cd target-repo
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add .
+          git commit -m "Sync files from SkillCode-backend"
+          git push origin main

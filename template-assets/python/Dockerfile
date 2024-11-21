@@ -6,7 +6,7 @@ WORKDIR /sandbox/app
 
 # Copy the Python template-assets into the container
 COPY python/ /sandbox/app/
-COPY ../feedback_schema.json /sandbox/
+COPY feedback_schema.json /sandbox/
 # Install dependencies from requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 

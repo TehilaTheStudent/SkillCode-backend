@@ -29,13 +29,6 @@ func SetupMiddlewares(r *gin.Engine, logger *zap.Logger, frontendURLS []string) 
 						return true
 					}
 				}
-	
-				// Log and block the request if the origin is not allowed
-				logger.Warn("CORS blocked request",
-					zap.String("origin", origin),
-					zap.String("path", c.Request.URL.Path),
-					zap.String("method", c.Request.Method),
-				)
 				return false
 			},
 			AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodDelete, http.MethodPut, http.MethodOptions},

@@ -1,8 +1,8 @@
-class GraphNode {
+class Graph {
     /**
      * A node in a graph.
      * @param {any} val - The value of the node.
-     * @param {GraphNode[]} neighbors - List of neighbor nodes.
+     * @param {Graph[]} neighbors - List of neighbor nodes.
      */
     constructor(val = null, neighbors = []) {
         this.val = val;
@@ -10,7 +10,7 @@ class GraphNode {
     }
 
     toString() {
-        return `GraphNode(val=${this.val})`;
+        return `Graph(val=${this.val})`;
     }
 }
 
@@ -134,8 +134,8 @@ function generateGraph(edges, directed = false) {
     const nodes = new Map();
 
     edges.forEach(([u, v]) => {
-        if (!nodes.has(u)) nodes.set(u, new GraphNode(u));
-        if (!nodes.has(v)) nodes.set(v, new GraphNode(v));
+        if (!nodes.has(u)) nodes.set(u, new Graph(u));
+        if (!nodes.has(v)) nodes.set(v, new Graph(v));
 
         nodes.get(u).neighbors.push(nodes.get(v));
         if (!directed) {
@@ -167,7 +167,7 @@ function exportGraph(nodes, directed = false) {
 
 // Exports
 module.exports = {
-    GraphNode,
+    Graph,
     TreeNode,
     ListNode,
     generateTree,

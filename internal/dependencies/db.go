@@ -12,7 +12,7 @@ import (
 
 
 
-// initializeDatabase sets up the database connection and starts health checks
+// initializeDatabase sets up the database connection 
 func InitializeDatabase() (*mongo.Client, error) {
 	client, err := ConnectMongoDB(config.GlobalConfigAPI.MongoDBURI)
 	if err != nil {
@@ -22,7 +22,7 @@ func InitializeDatabase() (*mongo.Client, error) {
 	return client, nil
 }
 
-// ConnectMongoDB initializes the MongoDB client with the provided URI and performs a health check.
+// ConnectMongoDB initializes the MongoDB client with the provided URI 
 func ConnectMongoDB(uri string) (*mongo.Client, error) {
 	// Set a timeout for connecting to MongoDB
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

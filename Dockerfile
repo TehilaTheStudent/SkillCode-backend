@@ -43,6 +43,5 @@ ENV PROJECT_ROOT=/app
 EXPOSE 8080
 
 # Command to run the Go server
-# command that will keep the container running
-# CMD ["tail", "-f", "/dev/null"]
+
 CMD ["./main"]

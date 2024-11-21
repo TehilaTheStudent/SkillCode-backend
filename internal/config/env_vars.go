@@ -12,11 +12,10 @@ import (
 
 // LanguageConfig holds the language-specific configuration values
 type LanguageConfig struct {
-	ImageName        string
-	DockerFilePath   string
-	TestUserCodePath string
-	UtilsFile        string
-	AssetsDir        string
+	ImageName      string
+	DockerFilePath string
+	UtilsFile      string
+	AssetsDir      string
 }
 
 // Config holds all dynamic configuration values
@@ -26,7 +25,6 @@ type ConfigAPI struct {
 	Port              string
 	FrontendURLS      []string
 	Base              string
-	LogFilePath       string
 	ModeEnv           string
 	ClusterName       string
 	TemplateAssetsDir string
@@ -45,7 +43,6 @@ func newLanguageConfig(language model.PredefinedSupportedLanguage) (*LanguageCon
 	langDir := fmt.Sprintf("%s/%s", TemplateAssetsDir, languageStr)
 	UtilsFile := fmt.Sprintf("%s/%s/ds_utils.%s", TemplateAssetsDir, strings.ToLower(string(language)), model.GetFileExtension(language))
 	dockerFilePath := fmt.Sprintf("%s/Dockerfile", langDir)
-	TestUserCodePath := fmt.Sprintf("%s/main.%s", langDir, model.GetFileExtension(language))
 
 	// Validate supported language
 	if model.GetFileExtension(language) == "" {
@@ -54,11 +51,10 @@ func newLanguageConfig(language model.PredefinedSupportedLanguage) (*LanguageCon
 
 	// Create language-specific configuration
 	config := &LanguageConfig{
-		ImageName:        fmt.Sprintf("skillcode-custom-%s:latest", languageStr),
-		DockerFilePath:   dockerFilePath,
-		TestUserCodePath: TestUserCodePath,
-		UtilsFile:        UtilsFile,
-		AssetsDir:        langDir,
+		ImageName:      fmt.Sprintf("tehilathestudent/skillcode-custom-%s:latest", languageStr),
+		DockerFilePath: dockerFilePath,
+		UtilsFile:      UtilsFile,
+		AssetsDir:      langDir,
 	}
 
 	return config, nil
@@ -72,7 +68,6 @@ func newConfigAPI() *ConfigAPI {
 		Port:              "8080",
 		FrontendURLS:      strings.Split(getEnv("FRONTEND_URLS", "http://127.0.0.1:3000,http://127.0.0.1:3001,http://localhost:3000,http://localhost:3001"), ","),
 		Base:              "skillcode",
-		LogFilePath:       "./logs/app.log",
 		ModeEnv:           getEnv("MODE_ENV", "development"),
 		ClusterName:       "my-cluster",
 		Namespace:         getEnv("NAMESPACE", "default"),

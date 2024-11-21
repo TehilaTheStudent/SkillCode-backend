@@ -13,58 +13,12 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/yaml"
 )
 
-// SharedTester handles shared Kubernetes resources
-type SharedTester struct {
-	ClientSet *kubernetes.Clientset // Kubernetes client, shared among all testers.
-	Namespace string                // Namespace where the Job will be created.
-}
 
-// UniqueTester holds request-specific data and uses SharedTester for shared resources
-type UniqueTester struct {
-	sharedTester   *SharedTester // Reference to SharedTester
-	jobName        string        // Unique Job name for the request.
-	imageName      string        // Image name used for the Job.
-	runtimeCommand string        // Runtime command for the user's script.
-	fileExtension  string        // File extension for the script (e.g., .py, .js).
-	requestID      string        // Unique request identifier.
-	configMapName  string        // ConfigMap name for the user's script.
-}
 
-// NewSharedTester initializes SharedTester with Kubernetes client
-func NewSharedTester(kubeconfigPath, namespace string) (*SharedTester, error) {
-	config, err := clientcmd.BuildConfigFromFlags("", kubeconfigPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load kubeconfig: %v", err)
-	}
 
-	ClientSet, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create Kubernetes client: %v", err)
-	}
-
-	return &SharedTester{
-		ClientSet: ClientSet,
-		Namespace: namespace,
-	}, nil
-}
-
-// NewUniqueTester initializes UniqueTester with request-specific data
-func NewUniqueTester(sharedTester *SharedTester, jobName, imageName, runtimeCommand, fileExtension, requestID string) *UniqueTester {
-	return &UniqueTester{
-		sharedTester:   sharedTester,
-		jobName:        jobName,
-		imageName:      imageName,
-		runtimeCommand: runtimeCommand,
-		fileExtension:  fileExtension,
-		requestID:      requestID,
-		configMapName:  fmt.Sprintf("user-script-%s", requestID),
-	}
-}
 
 // ExecuteWithJobTemplate runs a user script via a Kubernetes Job
 func (t *UniqueTester) ExecuteWithJobTemplate(params map[string]string, jobTemplatePath, scriptContent string) (string, error) {
@@ -121,43 +75,36 @@ func (t *UniqueTester) ExecuteWithJobTemplate(params map[string]string, jobTempl
 
 // waitForJobAndFetchLogs waits for the Job to complete (success or failure) and fetches logs if successful.
 func (t *UniqueTester) waitForJobAndFetchLogs(jobName string) (string, error) {
-	timeout := time.After(60 * time.Second)
-	tick := time.Tick(2 * time.Second)
+    timeout := time.After(30 * time.Second) // Adjusted timeout to 30 seconds
+    tick := time.Tick(1 * time.Second)     // Reduced tick interval for quicker checks
 
-	for {
-		select {
-		case <-timeout:
-			return "", fmt.Errorf("timeout waiting for Job '%s' to complete", jobName)
-		case <-tick:
-			// Fetch the Job object
-			job, err := t.sharedTester.ClientSet.BatchV1().Jobs(t.sharedTester.Namespace).Get(context.TODO(), jobName, metav1.GetOptions{})
-			if err != nil {
-				return "", fmt.Errorf("failed to get Job status: %v", err)
-			}
+    for {
+        select {
+        case <-timeout:
+            return "", fmt.Errorf("timeout waiting for Job '%s' to complete after 30 seconds", jobName)
+        case <-tick:
+            // Fetch the Job object
+            job, err := t.sharedTester.ClientSet.BatchV1().Jobs(t.sharedTester.Namespace).Get(context.TODO(), jobName, metav1.GetOptions{})
+            if err != nil {
+                return "", fmt.Errorf("failed to get Job status: %v", err)
+            }
 
-			// Check if the Job succeeded
-			if job.Status.Succeeded > 0 {
-				// Retrieve logs from the Job's pods
-				return t.getJobLogs(jobName)
-			}
+            // Check if the Job succeeded
+            if job.Status.Succeeded > 0 {
+                return t.getJobLogs(jobName) // Fetch logs immediately if the job succeeded
+            }
 
-			// Check if the Job failed
-			if job.Status.Failed > 0 {
-				return "", fmt.Errorf("Job '%s' failed. Check logs or events for more details.", jobName)
-			}
+            // Check if the Job failed
+            if job.Status.Failed > 0 {
+                return "", fmt.Errorf("Job '%s' failed. Check logs or events for more details.", jobName)
+            }
 
-			// Check if Job conditions indicate failure
-			for _, condition := range job.Status.Conditions {
-				if condition.Type == "Failed" && condition.Status == "True" {
-					return "", fmt.Errorf("Job '%s' failed with reason: %s, message: %s", jobName, condition.Reason, condition.Message)
-				}
-			}
-
-			// Log Job progress
-			fmt.Printf("Job '%s' is still running. Waiting...\n", jobName)
-		}
-	}
+            // Optional: Log progress for debugging
+            fmt.Printf("Job '%s' is still running...\n", jobName)
+        }
+    }
 }
+
 
 
 // getJobLogs retrieves logs from the Pod associated with the Job

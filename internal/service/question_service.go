@@ -6,8 +6,10 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/TehilaTheStudent/SkillCode-backend/internal/coding"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/config"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/model"
+	"github.com/TehilaTheStudent/SkillCode-backend/internal/parser_validator"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/repository"
 	tester "github.com/TehilaTheStudent/SkillCode-backend/internal/testing"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -30,13 +32,17 @@ type QuestionService struct {
 }
 
 // NewQuestionService creates a new QuestionService with a QuestionRepository instance.
-func NewQuestionService(repo repository.QuestionRepositoryInterface,sharedTester *tester.SharedTester) *QuestionService {
+func NewQuestionService(repo repository.QuestionRepositoryInterface, sharedTester *tester.SharedTester) *QuestionService {
 	return &QuestionService{Repo: repo, SharedTester: sharedTester}
 }
 
 // CreateQuestion creates a new question in the repository.
 func (s *QuestionService) CreateQuestion(question model.Question) (*model.Question, error) {
-	result, err := s.Repo.CreateQuestion(question)
+	err:=ValidateQuestion(&question)
+	if err!=nil{
+		return nil, err
+    }
+	result, err:= s.Repo.CreateQuestion(question)
 	if err != nil {
 		return nil, err
 	}
@@ -163,6 +169,10 @@ func sortQuestions(questions []model.Question, sortBy, sortOrder string) []model
 
 // UpdateQuestion updates an existing question in the repository.
 func (s *QuestionService) UpdateQuestion(id string, question model.Question) (*model.Question, error) {
+	err:=ValidateQuestion(&question)
+	if err!=nil{
+		return nil, err
+    }
 	objID, err := handleInvalidID(id)
 	if err != nil {
 		return nil, err
@@ -185,8 +195,6 @@ func (s *QuestionService) DeleteQuestion(id string) error {
 	return err
 }
 
-
-
 func (s *QuestionService) TestUniqueQuestion(questionID string, submission model.Submission, requestID string) (*model.Feedback, error) {
 	// Step 1: Validate Question
 	objID, err := handleInvalidID(questionID)
@@ -199,13 +207,6 @@ func (s *QuestionService) TestUniqueQuestion(questionID string, submission model
 		return nil, model.NewCustomError(404, "Question not found with ID: "+questionID)
 	}
 
-	// Step 2: Create unique assets
-	uniqueDir, err := tester.GenerateUniqueAssets(requestID, *question, submission)
-	if err != nil {
-		return nil, err
-	}
-	defer tester.CleanupUniqueAssets(uniqueDir) // Ensure cleanup
-
 	// Step 3: Create UniqueTester and execute
 	uniqueTester := tester.NewUniqueTester(
 		s.SharedTester,
@@ -213,10 +214,19 @@ func (s *QuestionService) TestUniqueQuestion(questionID string, submission model
 		config.GlobalLanguageConfigs[submission.Language].ImageName,
 		model.GetRuntime(submission.Language),
 		model.GetFileExtension(submission.Language),
-		requestID,
+		requestID, submission.Language,
 	)
+	script, err := tester.CreateTestRunnerScript(submission.Language, *question, submission.Code)
+	if err != nil {
+		return nil, err
+	}
+	var rawLogs string
+	if config.GlobalConfigAPI.ModeEnv == "production" {
 
-	rawLogs, err := uniqueTester.ExecuteUniqueTest(uniqueDir, submission.Code)
+		rawLogs, err = uniqueTester.ExecuteUniqueTestProducton(script)
+	} else {
+		rawLogs, err = uniqueTester.ExecuteUniqueTestDevelopment(script)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -235,4 +245,50 @@ func (s *QuestionService) TestUniqueQuestion(questionID string, submission model
 	}
 
 	return &feedback, nil
+}
+
+func ValidateQuestion(question *model.Question) error {
+	if question == nil {
+		return fmt.Errorf("question cannot be null")
+	}
+	if question.FunctionConfig.Parameters == nil {
+		return fmt.Errorf("function configuration parameters cannot be null")//yet...
+	}
+	if question.FunctionConfig.ReturnType == nil {
+		return fmt.Errorf("function configuration return type cannot be null")//yet...
+	}
+	err:= coding.ValidateCharacters(question)
+	if err!=nil{
+        return err
+    }
+	// Validate function configuration - example/test against functionConfig
+	for _, example := range question.Examples {
+		if len(example.Parameters) != len(*question.FunctionConfig.Parameters) {
+			return fmt.Errorf("example parameters count mismatch")
+		}
+		for i, param := range *question.FunctionConfig.Parameters {
+			if err := parser_validator.ValidateAbstractType(example.Parameters[i], &param.ParamType); err != nil {
+				return fmt.Errorf("example %d, parameter '%s': %v", i, param.Name, err)
+			}
+		}
+		if err := parser_validator.ValidateAbstractType(example.ExpectedOutput, question.FunctionConfig.ReturnType); err != nil {
+			return fmt.Errorf("example expected output: %v", err)
+		}
+	}
+
+	for _, testCase := range question.TestCases {
+		if len(testCase.Parameters) != len(*question.FunctionConfig.Parameters) {
+			return fmt.Errorf("test case parameters count mismatch")
+		}
+		for i, param := range *question.FunctionConfig.Parameters {
+			if err := parser_validator.ValidateAbstractType(testCase.Parameters[i], &param.ParamType); err != nil {
+				return fmt.Errorf("test case %d, parameter '%s': %v", i, param.Name, err)
+			}
+		}
+		if err := parser_validator.ValidateAbstractType(testCase.ExpectedOutput, question.FunctionConfig.ReturnType); err != nil {
+			return fmt.Errorf("test case expected output: %v", err)
+		}
+	}
+
+	return nil
 }

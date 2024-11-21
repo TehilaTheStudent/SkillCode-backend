@@ -1,0 +1,474 @@
+[
+  {
+    "title": "Two Sum",
+    "description": "Given an array of integers, return indices of the two numbers such that they add up to a specific target.",
+    "difficulty": "Easy",
+    "category": "Array",
+    "stats": 0,
+    "examples": [
+      {
+        "parameters": [
+          "[2, 7, 11, 15]",
+          "9"
+        ],
+        "expected_output": "[0, 1]"
+      }
+    ],
+    "test_cases": [
+      {
+        "parameters": [
+          "[3, 2, 4]",
+          "6"
+        ],
+        "expected_output": "[1, 2]"
+      }
+    ],
+    "function_config": {
+      "name": "twoSum",
+      "parameters": [
+        {
+          "name": "nums",
+          "param_type": {
+            "type": "Array",
+            "type_children": {
+              "type": "Integer"
+            }
+          }
+        },
+        {
+          "name": "target",
+          "param_type": {
+            "type": "Integer"
+          }
+        }
+      ],
+      "return_type": {
+        "type": "Array",
+        "type_children": {
+          "type": "Integer"
+        }
+      }
+    },
+    "languages": [
+      "JavaScript",
+      "Python"
+    ]
+  },
+  {
+    "title": "Reverse String",
+    "description": "Write a function that reverses a string.",
+    "difficulty": "Easy",
+    "category": "String",
+    "stats": 0,
+    "examples": [
+      {
+        "parameters": [
+          "\"hello\""
+        ],
+        "expected_output": "\"olleh\""
+      }
+    ],
+    "test_cases": [
+      {
+        "parameters": [
+          "\"world\""
+        ],
+        "expected_output": "\"dlrow\""
+      }
+    ],
+    "function_config": {
+      "name": "reverseString",
+      "parameters": [
+        {
+          "name": "s",
+          "param_type": {
+            "type": "String"
+          }
+        }
+      ],
+      "return_type": {
+        "type": "String"
+      }
+    },
+    "languages": [
+      "JavaScript",
+      "Python"
+    ]
+  },
+  {
+    "title": "Merge Two Sorted Lists",
+    "description": "Merge two sorted linked lists and return it as a new sorted list.",
+    "difficulty": "Medium",
+    "category": "LinkedList",
+    "stats": 0,
+    "examples": [
+      {
+        "parameters": [
+          "[1, 2, 4]",
+          "[1, 3, 4]"
+        ],
+        "expected_output": "[1, 1, 2, 3, 4, 4]"
+      }
+    ],
+    "test_cases": [
+      {
+        "parameters": [
+          "[2, 5, 6]",
+          "[1, 3, 4]"
+        ],
+        "expected_output": "[1, 2, 3, 4, 5, 6]"
+      }
+    ],
+    "function_config": {
+      "name": "mergeTwoLists",
+      "parameters": [
+        {
+          "name": "l1",
+          "param_type": {
+            "type": "ListNode"
+          }
+        },
+        {
+          "name": "l2",
+          "param_type": {
+            "type": "ListNode"
+          }
+        }
+      ],
+      "return_type": {
+        "type": "ListNode"
+      }
+    },
+    "languages": [
+      "JavaScript",
+      "Python"
+    ]
+  },
+  {
+    "title": "Valid Parentheses",
+    "description": "Given a string containing just the characters '(', ')', '{', '}', '[' and ']', determine if the input string is valid.",
+    "difficulty": "Easy",
+    "category": "String",
+    "stats": 0,
+    "examples": [
+      {
+        "parameters": [
+          "\"()\""
+        ],
+        "expected_output": "true"
+      }
+    ],
+    "test_cases": [
+      {
+        "parameters": [
+          "\"([)]\""
+        ],
+        "expected_output": "false"
+      }
+    ],
+    "function_config": {
+      "name": "isValid",
+      "parameters": [
+        {
+          "name": "s",
+          "param_type": {
+            "type": "String"
+          }
+        }
+      ],
+      "return_type": {
+        "type": "Boolean"
+      }
+    },
+    "languages": [
+      "JavaScript",
+      "Python"
+    ]
+  },
+  {
+    "title": "Maximum Subarray",
+    "description": "Find the contiguous subarray which has the largest sum and return its sum.",
+    "difficulty": "Medium",
+    "category": "Array",
+    "stats": 0,
+    "examples": [
+      {
+        "parameters": [
+          "[-2,1,-3,4,-1,2,1,-5,4]"
+        ],
+        "expected_output": "6"
+      }
+    ],
+    "test_cases": [
+      {
+        "parameters": [
+          "[1]"
+        ],
+        "expected_output": "1"
+      }
+    ],
+    "function_config": {
+      "name": "maxSubArray",
+      "parameters": [
+        {
+          "name": "nums",
+          "param_type": {
+            "type": "Array",
+            "type_children": {
+              "type": "Integer"
+            }
+          }
+        }
+      ],
+      "return_type": {
+        "type": "Integer"
+      }
+    },
+    "languages": [
+      "JavaScript",
+      "Python"
+    ]
+  },
+  {
+    "title": "Climbing Stairs",
+    "description": "You are climbing a staircase. It takes n steps to reach the top. Each time you can either climb 1 or 2 steps. In how many distinct ways can you climb to the top?",
+    "difficulty": "Easy",
+    "category": "DynamicProgramming",
+    "stats": 0,
+    "examples": [
+      {
+        "parameters": [
+          "2"
+        ],
+        "expected_output": "2"
+      }
+    ],
+    "test_cases": [
+      {
+        "parameters": [
+          "3"
+        ],
+        "expected_output": "3"
+      }
+    ],
+    "function_config": {
+      "name": "climbStairs",
+      "parameters": [
+        {
+          "name": "n",
+          "param_type": {
+            "type": "Integer"
+          }
+        }
+      ],
+      "return_type": {
+        "type": "Integer"
+      }
+    },
+    "languages": [
+      "JavaScript",
+      "Python"
+    ]
+  },
+  {
+    "title": "Merge Intervals",
+    "description": "Given a collection of intervals, merge all overlapping intervals.",
+    "difficulty": "Medium",
+    "category": "Array",
+    "stats": 0,
+    "examples": [
+      {
+        "parameters": [
+          "[[1,3],[2,6],[8,10],[15,18]]"
+        ],
+        "expected_output": "[[1,6],[8,10],[15,18]]"
+      }
+    ],
+    "test_cases": [
+      {
+        "parameters": [
+          "[[1,4],[4,5]]"
+        ],
+        "expected_output": "[[1,5]]"
+      }
+    ],
+    "function_config": {
+      "name": "merge",
+      "parameters": [
+        {
+          "name": "intervals",
+          "param_type": {
+            "type": "Array",
+            "type_children": {
+              "type": "Array",
+              "type_children": {
+                "type": "Integer"
+              }
+            }
+          }
+        }
+      ],
+      "return_type": {
+        "type": "Array",
+        "type_children": {
+          "type": "Array",
+          "type_children": {
+            "type": "Integer"
+          }
+        }
+      }
+    },
+    "languages": [
+      "JavaScript",
+      "Python"
+    ]
+  },
+  {
+    "title": "Binary Tree Inorder Traversal",
+    "description": "Given the root of a binary tree, return its inorder traversal.",
+    "difficulty": "Medium",
+    "category": "Tree",
+    "stats": 0,
+    "examples": [
+      {
+        "parameters": [
+          "[1,2,3]"
+        ],
+        "expected_output": "[2,1,3]"
+      }
+    ],
+    "test_cases": [
+      {
+        "parameters": [
+          "[]"
+        ],
+        "expected_output": "[]"
+      },
+      {
+        "parameters": [
+          "[1]"
+        ],
+        "expected_output": "[1]"
+      },
+      {
+        "parameters": [
+          "[1,2]"
+        ],
+        "expected_output": "[2,1]"
+      },
+      {
+        "parameters": [
+          "[1,2,3]"
+        ],
+        "expected_output": "[2,1,3]"
+      }
+    ],
+    "function_config": {
+      "name": "inorderTraversal",
+      "parameters": [
+        {
+          "name": "root",
+          "param_type": {
+            "type": "TreeNode"
+          }
+        }
+      ],
+      "return_type": {
+        "type": "Array",
+        "type_children": {
+          "type": "Integer"
+        }
+      }
+    },
+    "languages": [
+      "JavaScript",
+      "Python"
+    ]
+  },
+  {
+    "title": "Best Time to Buy and Sell Stock",
+    "description": "Given an array prices where prices[i] is the price of a given stock on the ith day, return the maximum profit you can achieve.",
+    "difficulty": "Easy",
+    "category": "Array",
+    "stats": 0,
+    "examples": [
+      {
+        "parameters": [
+          "[7,1,5,3,6,4]"
+        ],
+        "expected_output": "5"
+      }
+    ],
+    "test_cases": [
+      {
+        "parameters": [
+          "[7,6,4,3,1]"
+        ],
+        "expected_output": "0"
+      }
+    ],
+    "function_config": {
+      "name": "maxProfit",
+      "parameters": [
+        {
+          "name": "prices",
+          "param_type": {
+            "type": "Array",
+            "type_children": {
+              "type": "Integer"
+            }
+          }
+        }
+      ],
+      "return_type": {
+        "type": "Integer"
+      }
+    },
+    "languages": [
+      "JavaScript",
+      "Python"
+    ]
+  },
+  {
+    "title": "Longest Substring Without Repeating Characters",
+    "description": "Given a string s, find the length of the longest substring without repeating characters.",
+    "difficulty": "Medium",
+    "category": "String",
+    "stats": 0,
+    "examples": [
+      {
+        "parameters": [
+          "\"abcabcbb\""
+        ],
+        "expected_output": "3"
+      }
+    ],
+    "test_cases": [
+      {
+        "parameters": [
+          "\"bbbbb\""
+        ],
+        "expected_output": "1"
+      }
+    ],
+    "function_config": {
+      "name": "lengthOfLongestSubstring",
+      "parameters": [
+        {
+          "name": "s",
+          "param_type": {
+            "type": "String"
+          }
+        }
+      ],
+      "return_type": {
+        "type": "Integer"
+      }
+    },
+    "languages": [
+      "JavaScript",
+      "Python"
+    ]
+  }
+]
+

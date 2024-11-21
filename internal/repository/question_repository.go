@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -33,6 +32,14 @@ func NewQuestionRepository(db *mongo.Database) *QuestionRepository {
 
 // CreateQuestion inserts a new question into the database and returns the created question with its ID.
 func (r *QuestionRepository) CreateQuestion(question model.Question) (*model.Question, error) {
+	// Check if a question with the same title already exists
+	var existingQuestion model.Question
+	err := r.collection.FindOne(context.Background(), bson.M{"title": question.Title}).Decode(&existingQuestion)
+	if err == nil {
+		return nil, model.NewCustomError(400, "Question with the same title already exists")
+	} else if err != mongo.ErrNoDocuments {
+		return nil, err
+	}
 
 	// Insert the question into the database
 	result, err := r.collection.InsertOne(context.Background(), question)
@@ -83,6 +90,15 @@ func (r *QuestionRepository) GetAllQuestions() ([]model.Question, error) {
 
 // UpdateQuestion updates an existing question in the database by its ID.
 func (r *QuestionRepository) UpdateQuestion(id primitive.ObjectID, question model.Question) (bool, error) {
+	// Check if another question with the same title already exists
+	var existingQuestion model.Question
+	err := r.collection.FindOne(context.Background(), bson.M{"title": question.Title, "_id": bson.M{"$ne": id}}).Decode(&existingQuestion)
+	if err == nil {
+		return false, model.NewCustomError(400, "Another question with the same title already exists")
+	} else if err != mongo.ErrNoDocuments {
+		return false, err
+	}
+
 	updateResult, err := r.collection.UpdateOne(context.Background(), bson.M{"_id": id}, bson.M{"$set": question})
 	if err != nil {
 		return false, model.ErrInternal

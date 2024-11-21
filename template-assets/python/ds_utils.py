@@ -2,19 +2,19 @@ from typing import TypeVar, Generic, List
 
 T = TypeVar('T')  # Generic type for the value of the node
 
-class GraphNode(Generic[T]):
-    def __init__(self, val: T = None, neighbors: List['GraphNode[T]'] = None):
+class Graph(Generic[T]):
+    def __init__(self, val: T = None, neighbors: List['Graph[T]'] = None):
         """
         A node in a graph.
 
         :param val: The value of the node (any type specified by T).
-        :param neighbors: List of neighbor nodes (GraphNode).
+        :param neighbors: List of neighbor nodes (Graph).
         """
         self.val = val
         self.neighbors = neighbors if neighbors is not None else []
 
     def __repr__(self):
-        return f"GraphNode(val={self.val})"
+        return f"Graph(val={self.val})"
 
 from typing import Optional
 
@@ -140,13 +140,13 @@ def export_linked_list(head: Optional[ListNode[T]]) -> List[T]:
 
     return result
 
-def generate_graph(edges: List[List[T]], directed: bool = False) -> dict[T, GraphNode[T]]:
+def generate_graph(edges: List[List[T]], directed: bool = False) -> dict[T, Graph[T]]:
     """
     Generate a graph from a list of edges.
 
     :param edges: List of edges (e.g., [[1, 2], [1, 3], [4, 2]]).
     :param directed: Boolean indicating if the graph is directed.
-    :return: Dictionary of GraphNode objects representing the graph.
+    :return: Dictionary of Graph objects representing the graph.
     """
     nodes = {}
 
@@ -154,9 +154,9 @@ def generate_graph(edges: List[List[T]], directed: bool = False) -> dict[T, Grap
         u, v = edge
 
         if u not in nodes:
-            nodes[u] = GraphNode(u)
+            nodes[u] = Graph(u)
         if v not in nodes:
-            nodes[v] = GraphNode(v)
+            nodes[v] = Graph(v)
 
         nodes[u].neighbors.append(nodes[v])
         if not directed:
@@ -164,11 +164,11 @@ def generate_graph(edges: List[List[T]], directed: bool = False) -> dict[T, Grap
 
     return nodes
 
-def export_graph(nodes: dict[T, GraphNode[T]], directed: bool = False) -> List[List[T]]:
+def export_graph(nodes: dict[T, Graph[T]], directed: bool = False) -> List[List[T]]:
     """
     Export a graph to a list of edges.
 
-    :param nodes: Dictionary of GraphNode objects representing the graph.
+    :param nodes: Dictionary of Graph objects representing the graph.
     :return: List of edges (e.g., [[1, 2], [1, 3], [4, 2]]).
     """
     edges = []

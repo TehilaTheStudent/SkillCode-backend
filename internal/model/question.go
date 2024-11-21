@@ -1,6 +1,8 @@
 package model
 
 import (
+	"fmt"
+
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -10,6 +12,17 @@ type AbstractType struct {
 	TypeChildren *AbstractType `json:"type_children,omitempty" bson:"type_children,omitempty"` // Recursive reference
 }
 
+// toPrint converts the AbstractType to a string representation.
+func (a *AbstractType) ToPrint() string {
+	if a.TypeChildren != nil {
+		// Recursive case: composite type with children
+		return fmt.Sprintf("%s < %s >", a.Type, a.TypeChildren.ToPrint())
+	}
+	// Base case: atomic type
+	return a.Type
+}
+
+
 // Parameter represents a function parameter.
 type Parameter struct {
 	Name      string       `json:"name" bson:"name" validate:"required"`             // Parameter name
@@ -18,7 +31,7 @@ type Parameter struct {
 
 type FunctionConfig struct {
 	Name       string        `json:"name" bson:"name" validate:"required"`               // Function name
-	Parameters *[]Parameter  `json:"parameters,omitempty" bson:"parameters,omitempty"`   // Pointer to slice for nil vs empty distinction
+	Parameters *[]Parameter  `json:"parameters,omitempty" bson:"parameters,omitempty"`   // Pointer to slice for nil 
 	ReturnType *AbstractType `json:"return_type,omitempty" bson:"return_type,omitempty"` // Nil means VoidType
 }
 
@@ -55,4 +68,3 @@ type QuestionQueryParams struct {
 	SortBy       string   `json:"sort_by"`
 	SortOrder    string   `json:"order"`
 }
-

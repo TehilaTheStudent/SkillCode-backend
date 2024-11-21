@@ -1,29 +1,43 @@
 version: "3.8"
-
 services:
   mongo:
     image: mongo:latest
     container_name: mongo
-    network_mode: "host"  # Use host network
-    # ports:
-    #   - "27017:27017"
+    # network_mode: "host"  # Use host network
+    ports:
+      - "27017:27017"
     volumes:
       - mongo-data:/data/db
+  seed-db:
+    image: python:3.11
+    container_name: seed-db
+    depends_on:
+      - mongo
+    # network_mode: "host"
+    volumes:
+      - ./seed_scripts:/seed_scripts  # Mount the directory containing your Python script
+    environment:
+      - MONGO_URI=mongodb://mongo:27017
+      - DATABASE_NAME=skillcode_db
+    command: >
+      sh -c "pip install -r /seed_scripts/requirements.txt && cd /seed_scripts/ && python drop_post.py"
 
   skillcode-backend:
     image: tehilathestudent/skillcode-backend:latest
     container_name: skillcode-backend
-    network_mode: "host"  # Use host network
-    # ports:
-    #   - "8080:8080"
+    # network_mode: "host"  # Use host network
+    extra_hosts:
+    - "host.docker.internal:host-gateway" # Allows container to access host network
+    ports:
+      - "8080:8080"
     depends_on:
       - mongo
     environment:
-      - MONGO_URI=mongodb://localhost:27017
+      - MONGO_URI=mongodb://mongo:27017
       - MONGO_DB=skillcode_db
       - KUBECONFIG=/root/.kube/config
       - PORT=8080
-      - MODE_ENV=production # in development user submissions run locally for debugging
+      - MODE_ENV=${MODE_ENV:-production}  # Default to production if not set
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock # Mount Docker daemon socket for Kind
       - ~/.kube:/root/.kube                       # Mount kubeconfig to interact with Kind cluster
@@ -34,7 +48,7 @@ services:
     depends_on:
       - skillcode-backend          # Ensure the backend starts first
     environment:
-      - BACKEND_URL=http://localhost:8080/skillcode    # URL to access your backend API
+      - BACKEND_URL=http://skillcode-backend:8080/skillcode    # URL to access your backend API
     ports:
       - "3000:3000" 
 volumes:

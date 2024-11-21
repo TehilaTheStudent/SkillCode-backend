@@ -5,35 +5,36 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/TehilaTheStudent/SkillCode-backend/internal/model"
-	"github.com/ettle/strcase"
 	"strings"
 	"text/template"
+
+	"github.com/TehilaTheStudent/SkillCode-backend/internal/model"
+	"github.com/ettle/strcase"
 )
 
 // Type mappings for JavaScript
 var javascriptTypeMappings = map[string]string{
-	string(model.Integer):   "number",
-	string(model.Double):    "number",
-	string(model.String):    "string",
-	string(model.Boolean):   "boolean",
-	string(model.Array):     "Array",
-	string(model.Matrix):    "Array<Array>",
-	string(model.GraphNode): "GraphNode",
-	string(model.TreeNode):  "TreeNode",
-	string(model.ListNode):  "ListNode",
+	string(model.Integer):  "number",
+	string(model.Double):   "number",
+	string(model.String):   "string",
+	string(model.Boolean):  "boolean",
+	string(model.Array):    "Array",
+	string(model.Matrix):   "Array<Array>",
+	string(model.Graph):    "Graph",
+	string(model.TreeNode): "TreeNode",
+	string(model.ListNode): "ListNode",
 }
 
 var pythonTypeMappings = map[string]string{
-	string(model.Integer):   "int",
-	string(model.Double):    "float",
-	string(model.String):    "str",
-	string(model.Boolean):   "bool",
-	string(model.Array):     "list",
-	string(model.Matrix):    "list[list]",
-	string(model.GraphNode): "GraphNode",
-	string(model.TreeNode):  "TreeNode",
-	string(model.ListNode):  "ListNode",
+	string(model.Integer):  "int",
+	string(model.Double):   "float",
+	string(model.String):   "str",
+	string(model.Boolean):  "bool",
+	string(model.Array):    "list",
+	string(model.Matrix):   "list[list]",
+	string(model.Graph):    "Graph",
+	string(model.TreeNode): "TreeNode",
+	string(model.ListNode): "ListNode",
 }
 
 // mapToJSType maps abstract types to JavaScript types
@@ -45,33 +46,39 @@ func mapToJSType(paramType model.AbstractType) string {
 
 	// Handle nested structures
 	if paramType.TypeChildren != nil {
-		if paramType.Type == string(model.Array) {
+		switch paramType.Type {
+		case string(model.Array):
 			return fmt.Sprintf("Array<%s>", mapToJSType(*paramType.TypeChildren))
-		} else if paramType.Type == string(model.Matrix) {
+		case string(model.Matrix):
 			return fmt.Sprintf("Array<Array<%s>>", mapToJSType(*paramType.TypeChildren))
-		} else {
+		case string(model.Graph), string(model.TreeNode), string(model.ListNode):
 			return fmt.Sprintf("%s<%s>", baseType, mapToJSType(*paramType.TypeChildren))
+		default:
+			return baseType
 		}
 	}
 
 	return baseType
 }
 
-// abstract type-> string
+// mapToPythonType maps abstract types to Python types
 func mapToPythonType(paramType model.AbstractType) string {
 	baseType, exists := pythonTypeMappings[paramType.Type]
 	if !exists {
 		return "any"
 	}
 
-	// Handle children types recursively (for nested structures like list, TreeNode, etc.)
+	// Handle nested structures
 	if paramType.TypeChildren != nil {
-		if paramType.Type == string(model.Array) {
+		switch paramType.Type {
+		case string(model.Array):
 			return fmt.Sprintf("list[%s]", mapToPythonType(*paramType.TypeChildren))
-		} else if paramType.Type == string(model.Matrix) {
+		case string(model.Matrix):
 			return fmt.Sprintf("list[list[%s]]", mapToPythonType(*paramType.TypeChildren))
-		} else {
+		case string(model.Graph), string(model.TreeNode), string(model.ListNode):
 			return fmt.Sprintf("%s[%s]", baseType, mapToPythonType(*paramType.TypeChildren))
+		default:
+			return baseType
 		}
 	}
 
@@ -120,7 +127,7 @@ const jsFunctionTemplate = `/**
  */
 function {{.FunctionName}}({{.Params}}) {
     // TODO: Implement this function
-}`;
+}`
 
 const tsFunctionTemplate = `function {{.FunctionName}}({{.Params}}) {
     // TODO: Implement this function
@@ -162,19 +169,11 @@ func GenerateJavaScriptSignature(question model.Question) (string, error) {
 	return buf.String(), nil
 }
 
-
-
-
 // ToJSStyle converts a string to JavaScript-style camelCase
 func ToJSStyle(functionName string) string {
 	return strcase.ToCamel(functionName)
 }
 
-// Placeholder for Java signature generation
-func GenerateJavaSignature(question model.Question) (string, error) {
-	// TODO: Implement Java signature generation
-	return fmt.Sprintf("public %s %s(...) { }", "void", question.FunctionConfig.Name), nil
-}
 
 var languageGenerators = map[model.PredefinedSupportedLanguage]func(model.Question) (string, error){
 	model.Python:     GeneratePythonSignature,

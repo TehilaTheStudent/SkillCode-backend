@@ -62,7 +62,23 @@ jobs:
       - name: Build Docker Image
         if: success()
         run: docker build -t tehilathestudent/skillcode-backend:latest .
+      # Step: Build Docker Image for Custom Python
+      - name: Build Custom Python Docker Image
+        if: success()
+        run: |
+          docker build \
+            -t tehilathestudent/skillcode-custom-python:latest \
+            -f template-assets/python/Dockerfile \
+            template-assets/
 
+      # Step: Build Docker Image for Custom JavaScript
+      - name: Build Custom JavaScript Docker Image
+        if: success()
+        run: |
+          docker build \
+            -t tehilathestudent/skillcode-custom-javascript:latest \
+            -f template-assets/javascript/Dockerfile \
+            template-assets/
       # Step: Log in to Docker Hub
       - name: Log in to Docker Hub
         if: success()
@@ -75,7 +91,15 @@ jobs:
       - name: Push Docker Image
         if: success()
         run: docker push tehilathestudent/skillcode-backend:latest
+      # Step: Push Custom Python Docker Image
+      - name: Push Custom Python Docker Image
+        if: success()
+        run: docker push tehilathestudent/skillcode-custom-python:latest
 
+      # Step: Push Custom JavaScript Docker Image
+      - name: Push Custom JavaScript Docker Image
+        if: success()
+        run: docker push tehilathestudent/skillcode-custom-javascript:latest
       # Step: Run Integration Tests
       # - name: Run Integration Tests
       #   if: success()

@@ -1,0 +1,17 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+networking:
+  apiServerAddress: 0.0.0.0  # Bind to all interfaces
+  apiServerPort: 37000       # Change to an available port
+nodes:
+  - role: control-plane
+    extraPortMappings:
+      - containerPort: 6443   # Kubernetes API server's default port
+        hostPort: 37001       # New port on the host
+        protocol: TCP
+kubeadmConfigPatches:
+  - |
+    kind: ClusterConfiguration
+    apiServer:
+      certSANs:
+        - host.docker.internal

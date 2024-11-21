@@ -10,7 +10,6 @@ func RegisterRoutes(r *gin.Engine, questionHandler *QuestionHandler) {
 
 	RegisterQuestionRoutes(r, questionHandler)
 	RegisterCodeRoutes(r)
-	RegisterConfigRoutes(r)
 }
 
 func LogAndRespondError(c *gin.Context, err error, statusCode int) {

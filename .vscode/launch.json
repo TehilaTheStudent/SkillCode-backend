@@ -2,15 +2,33 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch",
+            "name": "Debug Backend in Docker",
+            "type": "go",
+            "request": "attach",
+            "mode": "remote",
+            "remotePath": "/app",
+            "port": 2345,
+            "host": "localhost",
+            "program": "${workspaceFolder}/SkillCode-backend",
+            "env": {},
+            "args": [],
+            "showLog": true
+        },
+        {
+            "name": "Launch development",
             "type": "go",
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceFolder}/cmd/main.go",
-            "env": {
-                "MONGO_URI": "mongodb://localhost:27017"
-            },
-            "args": []
+            "args": ["ENV_MOD=development"],
+        },
+        {
+            "name": "Launch production",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/cmd/main.go",
+            "args": ["ENV_MOD=production"],
         },
         {
             "name": "Debug Go Test",
@@ -20,7 +38,7 @@
             "program": "${workspaceFolder}/internal/repository/question_repository_test.go",
             "env": {},
             "buildFlags": "",
-            "trace": "log" 
+            "trace": "log"
         },
         {
             "name": "Debug Current File",
@@ -28,8 +46,7 @@
             "request": "launch",
             "mode": "auto",
             "program": "${file}",
-            "cwd": "${workspaceFolder}" 
-
+            "cwd": "${workspaceFolder}"
         }
     ]
 }
