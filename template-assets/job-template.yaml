@@ -20,7 +20,7 @@ spec:
         - sh
         - -c
         - |
-          echo "$USER_SCRIPT" > /app/main.$FILE_EXTENSION && $RUNTIME_COMMAND /app/main.$FILE_EXTENSION
+          echo "$USER_SCRIPT" > /sandbox/app/main.$FILE_EXTENSION && $RUNTIME_COMMAND /sandbox/app/main.$FILE_EXTENSION
         env:
         - name: USER_SCRIPT
           valueFrom:

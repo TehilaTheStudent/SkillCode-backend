@@ -15,7 +15,7 @@ import (
 
 // SetupSubmissionDependencies ensures all dependencies for submission handling are ready
 func SetupSubmissionDependencies(kubeconfigPath, namespace string) (*tester.SharedTester, error) {
-	// Ensure the working directory is correct - this is becouse of file paths
+	// Ensure the working directory is correct
 	if err := EnsureWorkingDirectory(); err != nil {
 		return nil, fmt.Errorf("working directory setup failed: %w", err)
 	}
@@ -34,34 +34,63 @@ func SetupSubmissionDependencies(kubeconfigPath, namespace string) (*tester.Shar
 	if err := BuildDockerImagesForAllLanguages(); err != nil {
 		return nil, fmt.Errorf("failed to build Docker images: %w", err)
 	}
-
 	// Initialize SharedTester
 	sharedTester, err := NewSharedTester(kubeconfigPath, namespace)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize Kubernetes client: %w", err)
 	}
+	// 4. Load Docker images onto the Kind cluster
+	if err := LoadImagesToKindCluster(sharedTester, config.GlobalConfigAPI.ClusterName); err != nil {
+		return nil, fmt.Errorf("failed to load images onto the Kind cluster: %w", err)
+	}
 
 	return sharedTester, nil
 }
 
+// BuildDockerImagesForAllLanguages builds Docker images for all predefined supported languages
 func BuildDockerImagesForAllLanguages() error {
+	for _, lang := range model.PredefinedSupportedLanguages {
+		langConfig, exists := config.GlobalLanguageConfigs[lang]
+		if !exists {
+			return fmt.Errorf("configuration for language %s not found", lang)
+		}
+		fmt.Printf("Building Docker image '%s' with Dockerfile '%s' in context '%s'...\n", langConfig.ImageName, langConfig.DockerFilePath, config.GlobalConfigAPI.TemplateAssetsDir)
+		output, err := utils.RunCommand(
+			"docker",
+			"build",
+			"-t", langConfig.ImageName, // Tag the image
+			"-f", langConfig.DockerFilePath, // Specify the Dockerfile
+			config.GlobalConfigAPI.TemplateAssetsDir, // Use the language-specific directory as the build context
+		)
+
+		if err != nil {
+			return fmt.Errorf("failed to build Docker image '%s': %v\nOutput: %s", langConfig.ImageName, err, output)
+		}
+	}
+	return nil
+}
+
+// LoadImagesToKindCluster loads all built images into the Kind cluster using kind commands
+func LoadImagesToKindCluster(t *tester.SharedTester, clusterName string) error {
+	// Loop through all predefined supported languages
 	for _, lang := range model.PredefinedSupportedLanguages {
 		config, exists := config.GlobalLanguageConfigs[lang]
 		if !exists {
 			return fmt.Errorf("configuration for language %s not found", lang)
 		}
 
-		output, err := utils.RunCommand(
-			"docker",
-			"build",
-			"-t", config.ImageName, // Tag the image
-			"-f", config.DockerFilePath, // Specify the Dockerfile
-			config.AssetsDir, // Use the language-specific directory as the build context
-		)
+		// Check if the image exists locally
+		imageName := config.ImageName
 
+
+		// Load the image into the Kind cluster using kind command
+		fmt.Printf("Loading image '%s' into Kind cluster '%s'...\n", imageName, clusterName)
+		_, err := utils.RunCommand("kind", "load", "docker-image", imageName, "--name", clusterName)
 		if err != nil {
-			return fmt.Errorf("Failed to build Docker image '%s': %v\nOutput: %s", config.ImageName, err, output)
+			return fmt.Errorf("failed to load image '%s' into Kind cluster: %v", imageName, err)
 		}
+
+		fmt.Printf("Successfully loaded image '%s' into Kind cluster\n", imageName)
 	}
 	return nil
 }

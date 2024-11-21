@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"text/template"
 
+	"github.com/TehilaTheStudent/SkillCode-backend/internal/coding"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/config"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/model"
 )
@@ -24,10 +25,19 @@ func CreateTestRunner(language model.PredefinedSupportedLanguage, path string, q
 	}
 
 	// Prepare template data
+	var functionName string
+	if language == model.Python {
+		functionName = coding.ToPythonStyle(question.FunctionConfig.Name)
+	} else if language == model.JavaScript {
+		functionName = coding.ToJSStyle(question.FunctionConfig.Name)
+	} else {
+		return fmt.Errorf("unsupported language: %v", language)
+	}
+
 	data := map[string]string{
 		"UserCode":     userCode,
 		"TestCases":    string(testCasesJSON),
-		"FunctionName": question.FunctionConfig.Name,
+		"FunctionName": functionName,
 	}
 
 	// Generate the test runner

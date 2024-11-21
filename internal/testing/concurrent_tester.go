@@ -73,6 +73,9 @@ func (t *UniqueTester) ExecuteWithJobTemplate(params map[string]string, jobTempl
 		return "", fmt.Errorf("failed to create ConfigMap: %v", err)
 	}
 
+	// Print the ConfigMap content for debugging
+	// fmt.Printf("ConfigMap '%s' content:\n%s\n", t.configMapName, scriptContent)
+
 	// Ensure ConfigMap cleanup after execution
 	defer func() {
 		if err := t.DeleteConfigMap(); err != nil {
@@ -96,6 +99,9 @@ func (t *UniqueTester) ExecuteWithJobTemplate(params map[string]string, jobTempl
 	if err := tmpl.Execute(&processedJob, params); err != nil {
 		return "", fmt.Errorf("failed to execute Job template: %v", err)
 	}
+
+	// Print the processed job for debugging
+	// fmt.Printf("Processed Job YAML:\n%s\n", processedJob.String())
 
 	// Step 4: Convert the processed YAML into a Job object
 	job := &v1.Job{}

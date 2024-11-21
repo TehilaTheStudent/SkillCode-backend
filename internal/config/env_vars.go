@@ -79,6 +79,7 @@ func newConfigAPI() *ConfigAPI {
 		KubeconfigPath:  getEnv("KUBECONFIG", filepath.Join(os.Getenv("HOME"), ".kube", "config")),
 		UniqueAssetsDir: "./unique-assets",
 		JobTemplatePath: "./template-assets/job-template.yaml",
+		TemplateAssetsDir: "./template-assets",
 	}
 }
 

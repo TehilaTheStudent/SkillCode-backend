@@ -3,8 +3,6 @@ module github.com/TehilaTheStudent/SkillCode-backend
 go 1.23
 
 require (
-	github.com/joho/godotenv v1.5.1
-	github.com/stretchr/testify v1.9.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	k8s.io/api v0.31.2
 	k8s.io/apimachinery v0.31.2
@@ -49,7 +47,6 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.2 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.12 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
@@ -82,7 +79,6 @@ require (
 	github.com/ettle/strcase v0.2.0
 	github.com/gin-gonic/gin v1.10.0
 	github.com/google/uuid v1.6.0
-	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/rs/cors v1.11.1
 	go.mongodb.org/mongo-driver v1.17.1
 	go.uber.org/zap v1.27.0

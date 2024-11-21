@@ -28,20 +28,30 @@ func GenerateUniqueAssets(requestID string, question model.Question, submission 
 	return uniqueDir, nil
 }
 
-
-func (t *UniqueTester) ExecuteUniqueTest(uniqueDir string,string code) (string, error) {
+func (t *UniqueTester) ExecuteUniqueTest(uniqueDir string, scriptContent string) (string, error) {
 	params := map[string]string{
-		"JOB_NAME":       t.jobName,
-		"IMAGE_NAME":     t.imageName,
+		"JOB_NAME":        t.jobName,
+		"IMAGE_NAME":      t.imageName,
 		"RUNTIME_COMMAND": t.runtimeCommand,
-		"FILE_EXTENSION": t.fileExtension,
-		"REQUEST_ID":     t.requestID,
+		"FILE_EXTENSION":  t.fileExtension,
+		"REQUEST_ID":      t.requestID,
 	}
 
-	// Use job template and uniqueDir
-	return t.ExecuteWithJobTemplate(params, filepath.Join(config.GlobalConfigAPI.JobTemplatePath), )
-}
+	// Construct the path to `main.<fileExtension>`
+	filePath := filepath.Join(uniqueDir, "main."+t.fileExtension)
 
+	// Read the contents of `main.<fileExtension>`
+	fileContent, err := os.ReadFile(filePath)
+	if err != nil {
+		return "", fmt.Errorf("failed to read file %s: %v", filePath, err)
+	}
+
+	// Convert fileContent to string
+	fileContentStr := string(fileContent)
+
+	// Use fileContentStr and params
+	return t.ExecuteWithJobTemplate(params, config.GlobalConfigAPI.JobTemplatePath, fileContentStr)
+}
 
 func CleanupUniqueAssets(path string) error {
 	return os.RemoveAll(path)

@@ -254,7 +254,7 @@ func (s *QuestionService) TestUniqueQuestion(questionID string, submission model
 		requestID,
 	)
 
-	rawLogs, err := uniqueTester.ExecuteUniqueTest(uniqueDir,submission.Code)
+	rawLogs, err := uniqueTester.ExecuteUniqueTest(uniqueDir, submission.Code)
 	if err != nil {
 		return nil, err
 	}

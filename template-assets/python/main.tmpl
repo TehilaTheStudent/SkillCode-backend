@@ -13,10 +13,12 @@ user_code = """{{.UserCode}}"""
 test_cases = {{.TestCases}}
 function_name = "{{.FunctionName}}"
 
+
+results = evaluate_user_code(user_code, test_cases, function_name)
+
 # Restore stdout before printing
 sys.stdout.close()
 sys.stdout = original_stdout
 
 
-results = evaluate_user_code(user_code, test_cases, function_name)
 print(json.dumps(results, indent=2))
