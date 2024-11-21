@@ -15,9 +15,13 @@ func GenerateUniqueAssets(requestID string, question model.Question, submission 
 	if err := os.MkdirAll(uniqueDir, 0755); err != nil {
 		return "", fmt.Errorf("failed to create unique directory: %v", err)
 	}
-
+	var testRunnerPath string
+	if config.GlobalConfigAPI.ModeEnv != "production" {
+		testRunnerPath = filepath.Join(config.GlobalLanguageConfigs[submission.Language].AssetsDir, fmt.Sprintf("dev.%s", model.GetFileExtension(submission.Language)))
+	} else {
+		testRunnerPath = filepath.Join(uniqueDir, fmt.Sprintf("main.%s", model.GetFileExtension(submission.Language)))
+	}
 	// Step 2: Generate test runner file
-	testRunnerPath := filepath.Join(uniqueDir, fmt.Sprintf("main.%s", model.GetFileExtension(submission.Language)))
 	err := CreateTestRunner(submission.Language, testRunnerPath, question, submission.Code)
 	if err != nil {
 		// Cleanup the directory if generation fails

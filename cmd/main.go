@@ -56,7 +56,7 @@ func initializeHandlers(client *mongo.Client, sharedTester *tester.SharedTester)
 // setupRouter configures the router with middlewares and routes fron ; questions, code, config
 func setupRouter(logger *zap.Logger, questionHandler *handler.QuestionHandler) *gin.Engine {
 	r := gin.Default() //logs every request to the terminal
-	middleware.SetupMiddlewares(r, logger, config.GlobalConfigAPI.FrontendURL)
+	middleware.SetupMiddlewares(r, logger, config.GlobalConfigAPI.FrontendURLS)
 	handler.RegisterRoutes(r, questionHandler)
 	return r
 }

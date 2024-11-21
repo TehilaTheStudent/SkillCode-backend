@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - image-builder
 
 jobs:
   build-and-test:

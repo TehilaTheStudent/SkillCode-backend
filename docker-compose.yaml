@@ -22,9 +22,12 @@ services:
       - MONGO_URI=mongodb://localhost:27017
       - MONGO_DB=skillcode_db
       - KUBECONFIG=/root/.kube/config
+      - PORT=8080
+      - MODE_ENV=production # in development user submissions run locally for debugging
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock # Mount Docker daemon socket for Kind
       - ~/.kube:/root/.kube                       # Mount kubeconfig to interact with Kind cluster
+      - ./logs:/app/logs # logs
   skillcode-frontend:
     image: tehilathestudent/skillcode-frontend:latest
     container_name: skillcode-frontend

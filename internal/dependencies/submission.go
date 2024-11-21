@@ -106,6 +106,7 @@ func EnsureKindInstalled() error {
 
 func EnsureClusterExists(clusterName string) error {
 	out, err := utils.RunCommand("kind", "get", "clusters")
+	//TODO: its not enough that the cluster exists, it has to be container in docker
 	if err != nil {
 		return fmt.Errorf("failed to get Kind clusters: %v", err)
 	}

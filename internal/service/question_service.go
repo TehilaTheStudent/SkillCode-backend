@@ -185,45 +185,7 @@ func (s *QuestionService) DeleteQuestion(id string) error {
 	return err
 }
 
-// // TestQuestion simulates running a user-provided function against test cases for a question.
-// func (s *QuestionService) TestQuestion(questionId string, submission model.Submission) (*model.Feedback, error) {
-// 	objID, err := handleInvalidID(questionId)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	//validations:
-// 	question, err := s.Repo.GetQuestionByID(objID)
-// 	if err != nil {
-// 		return nil, model.NewCustomError(404, "Question not found with ID: "+questionId)
-// 	}
-// 	// Increment attempts
-// 	question.Stats++
-// 	_, err = s.Repo.UpdateQuestion(objID, *question)
-// 	if err != nil {
-// 		return nil, err
-// 	}
 
-// 	sandboxConfig := config.GlobalLanguageConfigs[submission.Language]
-
-// 	testRunnerPath := sandboxConfig.TestUserCodePath
-// 	err = tester.CreateTestRunner(submission.Language, testRunnerPath, *question, submission.Code)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	output, err := tester.TestUserSolution(question, submission.Code, submission.Language, *sandboxConfig)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	if output.Error != nil && *output.Error == model.InternalServerError {
-// 		if output.Details == nil {
-// 			return nil, model.NewCustomError(500, "Internal Server Error")
-// 		}
-// 		return nil, model.NewCustomError(500, "Internal Server Error: "+*output.Details)
-// 	}
-
-// 	return output, nil
-// }
 
 func (s *QuestionService) TestUniqueQuestion(questionID string, submission model.Submission, requestID string) (*model.Feedback, error) {
 	// Step 1: Validate Question

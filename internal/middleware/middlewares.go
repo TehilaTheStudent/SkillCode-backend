@@ -13,7 +13,7 @@ import (
 // Middleware defines a function to process middleware
 type Middleware func(*gin.Engine)
 
-func SetupMiddlewares(r *gin.Engine, logger *zap.Logger, frontendURL string) {
+func SetupMiddlewares(r *gin.Engine, logger *zap.Logger, frontendURLS []string) {
 	// Global middlewares
 	r.Use(RequestIDMiddleware())          // Add unique request ID
 	r.Use(RequestLogger(logger))          // Log request details
@@ -23,7 +23,20 @@ func SetupMiddlewares(r *gin.Engine, logger *zap.Logger, frontendURL string) {
 	r.Use(func(c *gin.Context) {
 		corsMiddleware := cors.New(cors.Options{
 			AllowOriginFunc: func(origin string) bool {
-				return origin == frontendURL
+				for _, url := range frontendURLS {
+					if origin == url {
+						// Origin is allowed, no warning needed
+						return true
+					}
+				}
+	
+				// Log and block the request if the origin is not allowed
+				logger.Warn("CORS blocked request",
+					zap.String("origin", origin),
+					zap.String("path", c.Request.URL.Path),
+					zap.String("method", c.Request.Method),
+				)
+				return false
 			},
 			AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodDelete, http.MethodPut, http.MethodOptions},
 			AllowCredentials: true,
@@ -72,8 +85,6 @@ func RequestIDMiddleware() gin.HandlerFunc {
 		c.Next()
 	}
 }
-
-
 
 func ErrorLoggingMiddleware(logger *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {

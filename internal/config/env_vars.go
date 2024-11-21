@@ -24,7 +24,7 @@ type ConfigAPI struct {
 	MongoDBURI        string
 	DBName            string
 	Port              string
-	FrontendURL       string
+	FrontendURLS      []string
 	Base              string
 	LogFilePath       string
 	ModeEnv           string
@@ -67,18 +67,18 @@ func newLanguageConfig(language model.PredefinedSupportedLanguage) (*LanguageCon
 // LoadConfigAPI loads the application configuration from environment variables or a config file.
 func newConfigAPI() *ConfigAPI {
 	return &ConfigAPI{
-		MongoDBURI:      getEnv("MONGODB_URI", "mongodb://localhost:27017"),
-		DBName:          getEnv("MONGO_DB", "skillcode_db"),
-		Port:            getEnv("PORT", "8080"),
-		FrontendURL:     getEnv("FRONTEND_URL", "http://127.0.0.1:3000"),
-		Base:            "skillcode",
-		LogFilePath:     "./logs/app.log",
-		ModeEnv:         getEnv("MODE_ENV", "development"),
-		ClusterName:     "my-cluster",
-		Namespace:       getEnv("NAMESPACE", "default"),
-		KubeconfigPath:  getEnv("KUBECONFIG", filepath.Join(os.Getenv("HOME"), ".kube", "config")),
-		UniqueAssetsDir: "./unique-assets",
-		JobTemplatePath: "./template-assets/job-template.yaml",
+		MongoDBURI:        getEnv("MONGO_URI", "mongodb://localhost:27017"),
+		DBName:            getEnv("MONGO_DB", "skillcode_db"),
+		Port:              "8080",
+		FrontendURLS:      strings.Split(getEnv("FRONTEND_URLS", "http://127.0.0.1:3000,http://127.0.0.1:3001,http://localhost:3000,http://localhost:3001"), ","),
+		Base:              "skillcode",
+		LogFilePath:       "./logs/app.log",
+		ModeEnv:           getEnv("MODE_ENV", "development"),
+		ClusterName:       "my-cluster",
+		Namespace:         getEnv("NAMESPACE", "default"),
+		KubeconfigPath:    getEnv("KUBECONFIG", filepath.Join(os.Getenv("HOME"), ".kube", "config")),
+		UniqueAssetsDir:   "./unique-assets",
+		JobTemplatePath:   "./template-assets/job-template.yaml",
 		TemplateAssetsDir: "./template-assets",
 	}
 }
