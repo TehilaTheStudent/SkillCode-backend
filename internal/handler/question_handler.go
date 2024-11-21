@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/coding"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/config"
@@ -66,26 +67,27 @@ func (h *QuestionHandler) GetQuestionByID(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, question)
 }
+func splitOrEmpty(value string) []string {
+	if value == "" {
+		return []string{} // Return an empty slice if the string is empty
+	}
+	return strings.Split(value, ",")
+}
 
 func (h *QuestionHandler) GetAllQuestions(c *gin.Context) {
-	// Extract query parameters
-	q := c.Query("q")                            // Search query
-	categories := c.QueryArray("categories")     // Selected categories
-	difficulties := c.QueryArray("difficulties") // Selected difficulties
-	sort := c.DefaultQuery("sort", "stats")      // Sorting column
-	order := c.DefaultQuery("order", "desc")     // Sorting order
+	categories := c.Query("categories")
+	difficulties := c.Query("difficulties")
 
-	// Construct query parameters object
-	params := model.QuestionQueryParams{
-		SearchQuery:  q,
-		Categories:   categories,
-		Difficulties: difficulties,
-		SortField:    sort,
-		SortOrder:    order,
+	query := model.QuestionQueryParams{
+		Search:       c.Query("search"),
+		Categories:   splitOrEmpty(categories),
+		Difficulties: splitOrEmpty(difficulties),
+		SortBy:       c.Query("sort_by"),
+		SortOrder:    c.Query("order"),
 	}
 
 	// Call the service layer
-	questions, err := h.Service.GetAllQuestions(params)
+	questions, err := h.Service.GetAllQuestions(query)
 	if err != nil {
 		LogAndRespondError(c, err, http.StatusInternalServerError)
 		return
@@ -134,7 +136,8 @@ func (h *QuestionHandler) TestQuestion(c *gin.Context) {
 	}
 
 	// Call the service to test the question and get the feedback
-	feedback, err := h.Service.TestQuestion(id, submission)
+	requestID := c.GetString("request_id")
+	feedback, err := h.Service.TestUniqueQuestion(id, submission, requestID)
 	if err != nil {
 		LogAndRespondError(c, err, http.StatusInternalServerError)
 		return
@@ -185,4 +188,3 @@ func (h *QuestionHandler) GetFunctionSignature(c *gin.Context) {
 		"function_signature": signature,
 	})
 }
-

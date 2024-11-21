@@ -3,4 +3,6 @@
 # env.sh
 logs/
 
-assets/python/__pycache__/
+template-assets/python/__pycache__/
+template-assets/javascript/node_modules/
+unique-assets/

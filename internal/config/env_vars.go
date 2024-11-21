@@ -4,78 +4,81 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/model"
 )
 
-// Config holds the dynamic configuration values
-type ConfigSandbox struct {
+// LanguageConfig holds the language-specific configuration values
+type LanguageConfig struct {
 	ImageName        string
 	DockerFilePath   string
-	PodFilePath      string
-	PodName          string
-	ClusterName      string
 	TestUserCodePath string
 	UtilsFile        string
-	BaseDir          string
+	AssetsDir        string
 }
 
-// NewSandboxConfig creates a new sandbox configuration for a given language.
-func newSandboxConfig(language model.PredefinedSupportedLanguage) (*ConfigSandbox, error) {
+// Config holds all dynamic configuration values
+type ConfigAPI struct {
+	MongoDBURI        string
+	DBName            string
+	Port              string
+	FrontendURL       string
+	Base              string
+	LogFilePath       string
+	ModeEnv           string
+	ClusterName       string
+	TemplateAssetsDir string
+	Namespace         string
+	KubeconfigPath    string
+	UniqueAssetsDir   string
+	JobTemplatePath   string
+}
+
+// NewLanguageConfig creates a new language-specific configuration for a given language.
+func newLanguageConfig(language model.PredefinedSupportedLanguage) (*LanguageConfig, error) {
 	// Dynamically derive language paths
 	// Convert language to lowercase
-	BaseDir := "./assets"
+	TemplateAssetsDir := "./template-assets"
 	languageStr := strings.ToLower(string(language))
-	langDir := fmt.Sprintf("%s/%s", BaseDir, languageStr)
-	defaultPodFilePath := fmt.Sprintf("%s/pod.yaml", langDir)
-	UtilsFile := fmt.Sprintf("%s/%s/ds_utils.%s", BaseDir, strings.ToLower(string(language)), model.GetFileExtension(language))
+	langDir := fmt.Sprintf("%s/%s", TemplateAssetsDir, languageStr)
+	UtilsFile := fmt.Sprintf("%s/%s/ds_utils.%s", TemplateAssetsDir, strings.ToLower(string(language)), model.GetFileExtension(language))
 	dockerFilePath := fmt.Sprintf("%s/Dockerfile", langDir)
-	TestUserCodePath := fmt.Sprintf("%s/run_tests.%s", langDir, model.GetFileExtension(language))
+	TestUserCodePath := fmt.Sprintf("%s/main.%s", langDir, model.GetFileExtension(language))
 
 	// Validate supported language
 	if model.GetFileExtension(language) == "" {
 		return nil, model.NewCustomError(400, fmt.Sprintf("unsupported language: %s", language))
 	}
 
-	// Create sandbox configuration
-	config := &ConfigSandbox{
-		ImageName:        fmt.Sprintf("%s-test:latest", languageStr),
+	// Create language-specific configuration
+	config := &LanguageConfig{
+		ImageName:        fmt.Sprintf("skillcode-custom-%s:latest", languageStr),
 		DockerFilePath:   dockerFilePath,
-		PodFilePath:      defaultPodFilePath,
 		TestUserCodePath: TestUserCodePath,
 		UtilsFile:        UtilsFile,
-		BaseDir:          BaseDir,
+		AssetsDir:        langDir,
 	}
 
 	return config, nil
 }
 
-// Config holds all dynamic configuration values
-type ConfigAPI struct {
-	MongoDBURI  string
-	DBName      string
-	Port        string
-	FrontendURL string
-	Base        string
-	LogFilePath string
-	ModeEnv     string
-	PodName     string
-	ClusterName string
-}
-
 // LoadConfigAPI loads the application configuration from environment variables or a config file.
 func newConfigAPI() *ConfigAPI {
 	return &ConfigAPI{
-		MongoDBURI:  getEnv("MONGODB_URI", "mongodb://localhost:27017"),
-		DBName:      getEnv("MONGO_DB", "skillcode_db"),
-		Port:        getEnv("PORT", "8080"),
-		FrontendURL: getEnv("FRONTEND_URL", "http://127.0.0.1:3000"),
-		Base:        "skillcode",
-		LogFilePath: "./logs/app.log",
-		ModeEnv:     getEnv("MODE_ENV", "development"),
-		PodName:     "pod",
-		ClusterName: "my-cluster",
+		MongoDBURI:      getEnv("MONGODB_URI", "mongodb://localhost:27017"),
+		DBName:          getEnv("MONGO_DB", "skillcode_db"),
+		Port:            getEnv("PORT", "8080"),
+		FrontendURL:     getEnv("FRONTEND_URL", "http://127.0.0.1:3000"),
+		Base:            "skillcode",
+		LogFilePath:     "./logs/app.log",
+		ModeEnv:         getEnv("MODE_ENV", "development"),
+		ClusterName:     "my-cluster",
+		Namespace:       getEnv("NAMESPACE", "default"),
+		KubeconfigPath:  getEnv("KUBECONFIG", filepath.Join(os.Getenv("HOME"), ".kube", "config")),
+		UniqueAssetsDir: "./unique-assets",
+		JobTemplatePath: "./template-assets/job-template.yaml",
 	}
 }
 
@@ -91,21 +94,21 @@ func getEnv(key, defaultValue string) string {
 
 var (
 	GlobalConfigAPI       *ConfigAPI
-	GlobalConfigSandboxes map[model.PredefinedSupportedLanguage]*ConfigSandbox
+	GlobalLanguageConfigs map[model.PredefinedSupportedLanguage]*LanguageConfig
 )
 
 func InitGlobalConfigs() error {
 	GlobalConfigAPI = newConfigAPI()
-	// Initialize GlobalConfigSandbox map
-	GlobalConfigSandboxes = make(map[model.PredefinedSupportedLanguage]*ConfigSandbox)
+	// Initialize GlobalLanguageConfigs map
+	GlobalLanguageConfigs = make(map[model.PredefinedSupportedLanguage]*LanguageConfig)
 
-	// Populate the GlobalConfigSandbox map
+	// Populate the GlobalLanguageConfigs map
 	for _, lang := range model.PredefinedSupportedLanguages {
-		config, err := newSandboxConfig(lang)
+		config, err := newLanguageConfig(lang)
 		if err != nil {
-			return fmt.Errorf("failed to initialize GlobalConfigSandbox for language %s: %v", lang, err)
+			return fmt.Errorf("failed to initialize GlobalLanguageConfig for language %s: %v", lang, err)
 		}
-		GlobalConfigSandboxes[lang] = config
+		GlobalLanguageConfigs[lang] = config
 	}
 	return nil
 }

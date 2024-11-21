@@ -4,8 +4,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-
-
 // AbstractType represents a data type that can be atomic or composite.
 type AbstractType struct {
 	Type         string        `json:"type" bson:"type" validate:"required"`                   // AtomicType or CompositeType
@@ -47,14 +45,14 @@ type Question struct {
 // Solution represents a user-provided solution for a coding question
 type Submission struct {
 	Language PredefinedSupportedLanguage `json:"language"`
-	Code string `json:"code"`
+	Code     string                      `json:"code"`
 }
-
 
 type QuestionQueryParams struct {
-	SearchQuery  string   `json:"search_query"`
+	Search       string   `json:"search"`
 	Categories   []string `json:"categories"`
 	Difficulties []string `json:"difficulties"`
-	SortField    string   `json:"sort_field"`
-	SortOrder    string   `json:"sort_order"`
+	SortBy       string   `json:"sort_by"`
+	SortOrder    string   `json:"order"`
 }
+

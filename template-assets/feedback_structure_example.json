@@ -14,7 +14,7 @@
         "actual_output": "Error: target not found"
       }
     ],
-    "error": "if there is an error, here is the type: [compilation | fail tests | schema validation]",
+    "error": "if overall status!=success, [compilation | fail tests | internal server error]",
     "details": "the output of the error"
   }
   

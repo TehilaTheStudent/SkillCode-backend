@@ -10,20 +10,20 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var Client *mongo.Client
-var IsMongoDBHealthy = true
+
 
 // initializeDatabase sets up the database connection and starts health checks
-func InitializeDatabase() error {
-	if err := ConnectMongoDB(config.GlobalConfigAPI.MongoDBURI); err != nil {
-		return fmt.Errorf("failed to initialize database: %w", err)
+func InitializeDatabase() (*mongo.Client, error) {
+	client, err := ConnectMongoDB(config.GlobalConfigAPI.MongoDBURI)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize database: %w", err)
 	}
-	StartBackgroundHealthCheck(30 * time.Second)
-	return nil
+
+	return client, nil
 }
 
 // ConnectMongoDB initializes the MongoDB client with the provided URI and performs a health check.
-func ConnectMongoDB(uri string) error {
+func ConnectMongoDB(uri string) (*mongo.Client, error) {
 	// Set a timeout for connecting to MongoDB
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -32,36 +32,13 @@ func ConnectMongoDB(uri string) error {
 	clientOptions := options.Client().ApplyURI(uri)
 	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
-		return fmt.Errorf("failed to connect to MongoDB: %w", err)
+		return nil,fmt.Errorf("failed to connect to MongoDB: %w", err)
 	}
 
 	// Perform a health check (Ping) to verify the connection
 	if err := client.Ping(ctx, nil); err != nil {
-		return fmt.Errorf("failed to ping MongoDB: %w", err)
+		return nil,fmt.Errorf("failed to ping MongoDB: %w", err)
 	}
 
-	Client = client
-	return nil
-}
-
-// HealthCheck verifies the MongoDB connection by performing a Ping.
-func HealthCheck() error {
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
-
-	if err := Client.Ping(ctx, nil); err != nil {
-		IsMongoDBHealthy = false
-		return fmt.Errorf("MongoDB health check failed: %w", err)
-	}
-	IsMongoDBHealthy = true // Update global health status
-	return nil
-}
-
-func StartBackgroundHealthCheck(interval time.Duration) {
-	go func() {
-		for {
-			_ = HealthCheck()
-			time.Sleep(interval)
-		}
-	}()
+	return client,nil
 }

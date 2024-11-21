@@ -33,8 +33,8 @@ COPY --from=builder /app/main /app/main
 # Set the working directory
 WORKDIR /app
 
-# Copy the assets directory into the container
-COPY ./assets /app/assets
+# Copy the template-assets directory into the container
+COPY ./template-assets /app/template-assets
 
 # Set the PROJECT_ROOT environment variable
 ENV PROJECT_ROOT=/app

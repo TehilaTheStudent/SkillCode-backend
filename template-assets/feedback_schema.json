@@ -8,7 +8,7 @@
         "success",
         "fail"
       ],
-      "description": "Overall status of the process."
+      "description": "Overall status of the process: success or fail."
     },
     "results": {
       "type": "array",
@@ -22,7 +22,7 @@
               "pass",
               "fail"
             ],
-            "description": "The status of the individual test case."
+            "description": "The status of the individual test case: pass or fail."
           },
           "parameters": {
             "type": "array",
@@ -53,25 +53,27 @@
         "string",
         "null"
       ],
+      "description": "Error type if overall status is not success: [compilation | fail tests | internal server error].",
       "enum": [
         "compilation",
         "fail tests",
-        "schema validation",
+        "internal server error",
         null
-      ],
-      "description": "Error type if present: compilation, fail tests, or schema validation."
+      ]
     },
     "details": {
       "type": [
         "string",
         "null"
       ],
-      "description": "Detailed description of the error if applicable."
+      "description": "Detailed description of the error, applicable if the overall status is fail."
     }
   },
   "required": [
     "status",
-    "results"
+    "results",
+    "error",
+    "details"
   ],
   "additionalProperties": false
 }

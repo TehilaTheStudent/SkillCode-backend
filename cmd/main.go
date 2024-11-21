@@ -2,15 +2,18 @@ package main
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/config"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/dependencies"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/handler"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/middleware"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/repository"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/service"
+	tester "github.com/TehilaTheStudent/SkillCode-backend/internal/testing"
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.uber.org/zap"
-	"os"
 )
 
 func main() {
@@ -25,12 +28,12 @@ func main() {
 		logger.Fatal("Failed to initialize configuration", zap.Error(err))
 	}
 	// Setup all dependencies
-	err = dependencies.SetupAllDependencies()
+	mongoClient,sharedTester, err := dependencies.SetupAllDependencies()
 	if err != nil {
 		logger.Fatal("Failed to setup dependencies", zap.Error(err))
 	}
 	// Initialize handlers
-	questionHandler := initializeHandlers()
+	questionHandler := initializeHandlers(mongoClient,sharedTester)
 
 	// Setup the router with middlewares and routes
 	r := setupRouter(logger, questionHandler)
@@ -44,9 +47,9 @@ func main() {
 
 // initializeHandlers sets up the handlers for the application (repository<-service<-handler)
 // this is the dependency injection
-func initializeHandlers() *handler.QuestionHandler {
-	questionRepo := repository.NewQuestionRepository(dependencies.Client.Database(config.GlobalConfigAPI.DBName))
-	questionService := service.NewQuestionService(questionRepo)
+func initializeHandlers(client *mongo.Client, sharedTester *tester.SharedTester) (*handler.QuestionHandler) {
+	questionRepo := repository.NewQuestionRepository(client.Database(config.GlobalConfigAPI.DBName))
+	questionService := service.NewQuestionService(questionRepo,sharedTester)
 	return handler.NewQuestionHandler(questionService)
 }
 

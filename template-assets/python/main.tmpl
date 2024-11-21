@@ -1,0 +1,22 @@
+from evaluator import evaluate_user_code
+import json
+import os
+import sys
+
+
+# Redirect stdout to null
+original_stdout = sys.stdout
+sys.stdout = open(os.devnull, 'w')  # Suppress stdout
+
+
+user_code = """{{.UserCode}}"""
+test_cases = {{.TestCases}}
+function_name = "{{.FunctionName}}"
+
+# Restore stdout before printing
+sys.stdout.close()
+sys.stdout = original_stdout
+
+
+results = evaluate_user_code(user_code, test_cases, function_name)
+print(json.dumps(results, indent=2))

@@ -1,0 +1,40 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{.JOB_NAME}} # Placeholder for the job name, dynamically replaced during job creation
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 30
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      labels:
+        app: language-test
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: language-test-container
+        image: {{.IMAGE_NAME}} # Image name dynamically modified
+        imagePullPolicy: Never
+        command:
+        - sh
+        - -c
+        - |
+          echo "$USER_SCRIPT" > /app/main.$FILE_EXTENSION && $RUNTIME_COMMAND /app/main.$FILE_EXTENSION
+        env:
+        - name: USER_SCRIPT
+          valueFrom:
+            configMapKeyRef:
+              name: user-script-{{.REQUEST_ID}} # Unique ConfigMap for the request
+              key: run_tests # Key in the ConfigMap
+        - name: RUNTIME_COMMAND
+          value: "{{.RUNTIME_COMMAND}}" # Placeholder for dynamic runtime command (e.g., python, node)
+        - name: FILE_EXTENSION
+          value: "{{.FILE_EXTENSION}}" # Placeholder for file extension (e.g., py, js)
+        resources:
+          requests:
+            memory: "32Mi"
+            cpu: "100m"
+          limits:
+            memory: "128Mi"
+            cpu: "200m"

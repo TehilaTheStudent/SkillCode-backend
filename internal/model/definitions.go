@@ -36,10 +36,6 @@ type PredefinedSupportedLanguage string
 const (
 	JavaScript PredefinedSupportedLanguage = "JavaScript"
 	Python     PredefinedSupportedLanguage = "Python"
-	Java       PredefinedSupportedLanguage = "Java"
-	Go         PredefinedSupportedLanguage = "Go"
-	CSharp     PredefinedSupportedLanguage = "CSharp"
-	Cpp        PredefinedSupportedLanguage = "Cpp"
 )
 
 // PredefinedCategory represents categories for questions.

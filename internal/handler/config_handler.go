@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 
+	"github.com/TehilaTheStudent/SkillCode-backend/internal/config"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/model"
 	"github.com/gin-gonic/gin"
 )
@@ -40,10 +41,6 @@ func ServeConfigs(c *gin.Context) {
 		"languages": []string{
 			string(model.JavaScript),
 			string(model.Python),
-			string(model.Java),
-			string(model.Go),
-			string(model.CSharp),
-			string(model.Cpp),
 		},
 	}
 
@@ -51,5 +48,6 @@ func ServeConfigs(c *gin.Context) {
 }
 
 func RegisterConfigRoutes(r *gin.Engine) {
-	r.GET("/configs", ServeConfigs)
+	appGroup := r.Group(config.GlobalConfigAPI.Base)
+	appGroup.GET("/configs", ServeConfigs)
 }

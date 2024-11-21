@@ -1,6 +1,8 @@
 package service
 
 import (
+	"encoding/json"
+	"fmt"
 	"sort"
 	"strings"
 
@@ -18,16 +20,18 @@ type QuestionServiceInterface interface {
 	GetAllQuestions(params model.QuestionQueryParams) ([]model.Question, error)
 	UpdateQuestion(id string, question model.Question) (*model.Question, error)
 	DeleteQuestion(id string) error
-	TestQuestion(id string, solution model.Submission) (*model.Feedback, error)
+	// TestQuestion(id string, solution model.Submission) (*model.Feedback, error)
+	TestUniqueQuestion(questionID string, submission model.Submission, requestID string) (*model.Feedback, error)
 }
 
 type QuestionService struct {
-	Repo repository.QuestionRepositoryInterface
+	Repo         repository.QuestionRepositoryInterface
+	SharedTester *tester.SharedTester
 }
 
 // NewQuestionService creates a new QuestionService with a QuestionRepository instance.
-func NewQuestionService(repo repository.QuestionRepositoryInterface) *QuestionService {
-	return &QuestionService{Repo: repo}
+func NewQuestionService(repo repository.QuestionRepositoryInterface,sharedTester *tester.SharedTester) *QuestionService {
+	return &QuestionService{Repo: repo, SharedTester: sharedTester}
 }
 
 // CreateQuestion creates a new question in the repository.
@@ -64,8 +68,8 @@ func (s *QuestionService) GetAllQuestions(params model.QuestionQueryParams) ([]m
 	}
 
 	// Apply filtering
-	if params.SearchQuery != "" {
-		questions = filterBySearchQuery(questions, params.SearchQuery)
+	if params.Search != "" {
+		questions = filterBySearchQuery(questions, params.Search)
 	}
 
 	if len(params.Categories) > 0 {
@@ -77,7 +81,9 @@ func (s *QuestionService) GetAllQuestions(params model.QuestionQueryParams) ([]m
 	}
 
 	// Apply sorting
-	questions = sortQuestions(questions, params.SortField, params.SortOrder)
+	questions = sortQuestions(questions, params.SortBy, params.SortOrder)
+
+	// Ensure no nil slices are returned
 	if questions == nil {
 		questions = []model.Question{}
 	}
@@ -98,17 +104,12 @@ func filterBySearchQuery(questions []model.Question, query string) []model.Quest
 
 // Filter by categories
 func filterByCategories(questions []model.Question, categories []string) []model.Question {
-	categorySet := make(map[string]struct{})
+	categorySet := make(map[string]struct{}, len(categories))
 	for _, category := range categories {
 		if category != "" {
 			categorySet[category] = struct{}{}
 		}
 	}
-
-	if len(categorySet) == 0 {
-		return questions
-	}
-	return questions
 
 	var filtered []model.Question
 	for _, question := range questions {
@@ -121,15 +122,13 @@ func filterByCategories(questions []model.Question, categories []string) []model
 
 // Filter by difficulties
 func filterByDifficulties(questions []model.Question, difficulties []string) []model.Question {
-	difficultySet := make(map[string]struct{})
+	difficultySet := make(map[string]struct{}, len(difficulties))
 	for _, difficulty := range difficulties {
 		if difficulty != "" {
 			difficultySet[difficulty] = struct{}{}
 		}
 	}
-	if len(difficultySet) == 0 {
-		return questions
-	}
+
 	var filtered []model.Question
 	for _, question := range questions {
 		if _, exists := difficultySet[question.Difficulty]; exists {
@@ -140,21 +139,21 @@ func filterByDifficulties(questions []model.Question, difficulties []string) []m
 }
 
 // Sort questions
-func sortQuestions(questions []model.Question, sortField, sortOrder string) []model.Question {
-	sort.Slice(questions, func(i, j int) bool {
+func sortQuestions(questions []model.Question, sortBy, sortOrder string) []model.Question {
+	sort.SliceStable(questions, func(i, j int) bool {
 		var less bool
-		switch sortField {
+		switch sortBy {
 		case "stats":
 			less = questions[i].Stats < questions[j].Stats
 		case "difficulty":
-			order := map[string]int{"Easy": 1, "Medium": 2, "Hard": 3}
-			less = order[questions[i].Difficulty] < order[questions[j].Difficulty]
+			order := map[string]int{"easy": 1, "medium": 2, "hard": 3}
+			less = order[strings.ToLower(questions[i].Difficulty)] < order[strings.ToLower(questions[j].Difficulty)]
 		case "category":
-			less = questions[i].Category < questions[j].Category
-		default:
-			less = questions[i].Title < questions[j].Title
+			less = strings.ToLower(questions[i].Category) < strings.ToLower(questions[j].Category)
+		default: // Default to sorting by title
+			less = strings.ToLower(questions[i].Title) < strings.ToLower(questions[j].Title)
 		}
-		if sortOrder == "desc" {
+		if strings.ToLower(sortOrder) == "desc" {
 			return !less
 		}
 		return less
@@ -186,28 +185,92 @@ func (s *QuestionService) DeleteQuestion(id string) error {
 	return err
 }
 
-// TestQuestion simulates running a user-provided function against test cases for a question.
-func (s *QuestionService) TestQuestion(questionId string, submission model.Submission) (*model.Feedback, error) {
-	objID, err := handleInvalidID(questionId)
+// // TestQuestion simulates running a user-provided function against test cases for a question.
+// func (s *QuestionService) TestQuestion(questionId string, submission model.Submission) (*model.Feedback, error) {
+// 	objID, err := handleInvalidID(questionId)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	//validations:
+// 	question, err := s.Repo.GetQuestionByID(objID)
+// 	if err != nil {
+// 		return nil, model.NewCustomError(404, "Question not found with ID: "+questionId)
+// 	}
+// 	// Increment attempts
+// 	question.Stats++
+// 	_, err = s.Repo.UpdateQuestion(objID, *question)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	sandboxConfig := config.GlobalLanguageConfigs[submission.Language]
+
+// 	testRunnerPath := sandboxConfig.TestUserCodePath
+// 	err = tester.CreateTestRunner(submission.Language, testRunnerPath, *question, submission.Code)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	output, err := tester.TestUserSolution(question, submission.Code, submission.Language, *sandboxConfig)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	if output.Error != nil && *output.Error == model.InternalServerError {
+// 		if output.Details == nil {
+// 			return nil, model.NewCustomError(500, "Internal Server Error")
+// 		}
+// 		return nil, model.NewCustomError(500, "Internal Server Error: "+*output.Details)
+// 	}
+
+// 	return output, nil
+// }
+
+func (s *QuestionService) TestUniqueQuestion(questionID string, submission model.Submission, requestID string) (*model.Feedback, error) {
+	// Step 1: Validate Question
+	objID, err := handleInvalidID(questionID)
 	if err != nil {
 		return nil, err
 	}
-	//validations:
+
 	question, err := s.Repo.GetQuestionByID(objID)
 	if err != nil {
-		return nil, model.NewCustomError(404, "Question not found with ID: "+questionId)
+		return nil, model.NewCustomError(404, "Question not found with ID: "+questionID)
 	}
-	// Step 3: Prepare Python Test Runner
-	sandboxConfig := config.GlobalConfigSandboxes[submission.Language]
 
-	testRunnerPath := sandboxConfig.TestUserCodePath
-	err = tester.CreateTestRunner(submission.Language, testRunnerPath, *question, submission.Code)
+	// Step 2: Create unique assets
+	uniqueDir, err := tester.GenerateUniqueAssets(requestID, *question, submission)
 	if err != nil {
 		return nil, err
 	}
-	output, err := tester.TestUserSolution(question, submission.Code, submission.Language, *sandboxConfig)
+	defer tester.CleanupUniqueAssets(uniqueDir) // Ensure cleanup
+
+	// Step 3: Create UniqueTester and execute
+	uniqueTester := tester.NewUniqueTester(
+		s.SharedTester,
+		fmt.Sprintf("job-%s", requestID),
+		config.GlobalLanguageConfigs[submission.Language].ImageName,
+		model.GetRuntime(submission.Language),
+		model.GetFileExtension(submission.Language),
+		requestID,
+	)
+
+	rawLogs, err := uniqueTester.ExecuteUniqueTest(uniqueDir,submission.Code)
 	if err != nil {
 		return nil, err
 	}
-	return output, nil
+	// Parse JSON logs into Feedback struct
+	var feedback model.Feedback
+	if parseErr := json.Unmarshal([]byte(rawLogs), &feedback); parseErr != nil {
+		return nil, model.NewCustomError(500, fmt.Sprintf("failed to parse feedback logs: %v", parseErr))
+	}
+
+	// Step 4: Process results
+	if feedback.Error != nil && *feedback.Error == model.InternalServerError {
+		if feedback.Details == nil {
+			return nil, model.NewCustomError(500, "Internal Server Error")
+		}
+		return nil, model.NewCustomError(500, "Internal Server Error: "+*feedback.Details)
+	}
+
+	return &feedback, nil
 }

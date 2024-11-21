@@ -18,7 +18,7 @@ func ServeUtils(c *gin.Context) {
 		LogAndRespondError(c, errors.New("invalid language"), http.StatusBadRequest)
 		return
 	}
-	filePath := config.GlobalConfigSandboxes[language].UtilsFile
+	filePath := config.GlobalLanguageConfigs[language].UtilsFile
 
 	content, err := os.ReadFile(filePath)
 	if err != nil {
@@ -31,5 +31,5 @@ func ServeUtils(c *gin.Context) {
 // RegisterQuestionRoutes sets up the routes for question-related endpoints
 func RegisterCodeRoutes(r *gin.Engine) {
 	appGroup := r.Group(config.GlobalConfigAPI.Base)
-	appGroup.GET("/utils", ServeUtils)
+	appGroup.GET("/ds_utils", ServeUtils)
 }

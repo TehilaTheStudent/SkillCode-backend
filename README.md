@@ -69,7 +69,7 @@ Itay: " if there is a feature you didnt implement, tell me, so i wont have to gu
 
 ## developer instructions- adding more languages functionality
 
-- creeate in ./assets/new_language
+- creeate in ./template-assets/new_language
 - implement : generating function sugnature, testing
 
 ## backend urls
@@ -81,36 +81,23 @@ All endpoints are prefixed with:
 
 ---
 
-## Endpoints
+Here’s a concise table with only the HTTP methods and endpoints:
 
-### **Questions**
-
-| Method   | URL              | Description              |
-| -------- | ---------------- | ------------------------ |
-| `POST`   | `/questions`     | Create a new question.   |
-| `GET`    | `/questions/:id` | Get question by ID.      |
-| `GET`    | `/questions`     | Get all questions.       |
-| `PUT`    | `/questions/:id` | Update a question by ID. |
-| `DELETE` | `/questions/:id` | Delete a question by ID. |
-
----
-
-### **Testing**
-
-| Method | URL                   | Description            |
-| ------ | --------------------- | ---------------------- |
-| `POST` | `/questions/:id/test` | Test a question by ID. |
-
----
-
-### **Function Signature**
-
-| Method | URL                        | Description                            |
-| ------ | -------------------------- | -------------------------------------- |
-| `GET`  | `/questions/:id/signature` | Get function signature for a question. |
+| **HTTP Method** | **Endpoint**                         |
+| --------------- | ------------------------------------ |
+| `POST`          | `/skillcode/questions`               |
+| `GET`           | `/skillcode/questions/:id`           |
+| `GET`           | `/skillcode/questions`               |
+| `PUT`           | `/skillcode/questions/:id`           |
+| `DELETE`        | `/skillcode/questions/:id`           |
+| `POST`          | `/skillcode/questions/:id/test`      |
+| `GET`           | `/skillcode/questions/:id/signature` |
+| `GET`           | `/skillcode/ds_utils`                |
+| `GET`           | `/skillcode/configs`                 |
+| `GET`           | `/skillcode/utils`                   |
+| `POST`          | `/skillcode/questions/:id/utils`     |
 
 ### here i will include explanations of the status codes returned
-
 
 #### my personal notes
 
@@ -122,10 +109,13 @@ All endpoints are prefixed with:
 - nuxt frontend
 
 ## TODOS:
-
+- i have to keep in mind that gin creates new go routines for each incoming http request 
 - google docs about the UI [[UI NOTES](https://docs.google.com/document/d/1ALAKcifoX5DRHbdMJkeR07SC64mj_ZiGxcPbDIpEtEw/edit?usp=sharing)]
 
+- https://k6.io/
 
 ### issues im aware of
+
 ### things i would implement ASAP
+
 ### overview exlanation of directory structure

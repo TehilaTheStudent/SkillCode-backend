@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/TehilaTheStudent/SkillCode-backend/internal/dependencies"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/rs/cors"
@@ -19,7 +18,6 @@ func SetupMiddlewares(r *gin.Engine, logger *zap.Logger, frontendURL string) {
 	r.Use(RequestIDMiddleware())          // Add unique request ID
 	r.Use(RequestLogger(logger))          // Log request details
 	r.Use(ErrorLoggingMiddleware(logger)) // Log errors after processing
-	r.Use(HealthMiddleware())             // Block unhealthy requests
 
 	// CORS middleware
 	r.Use(func(c *gin.Context) {
@@ -75,17 +73,7 @@ func RequestIDMiddleware() gin.HandlerFunc {
 	}
 }
 
-// Middleware to block requests when unhealthy
-func HealthMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		if !dependencies.IsMongoDBHealthy {
-			c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Service is temporarily unavailable"})
-			c.Abort()
-			return
-		}
-		c.Next()
-	}
-}
+
 
 func ErrorLoggingMiddleware(logger *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
