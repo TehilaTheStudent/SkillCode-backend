@@ -32,6 +32,7 @@ type ConfigAPI struct {
 	KubeconfigPath    string
 	UniqueAssetsDir   string
 	JobTemplatePath   string
+	ClusterConfigFile string
 }
 
 // NewLanguageConfig creates a new language-specific configuration for a given language.
@@ -69,12 +70,13 @@ func newConfigAPI() *ConfigAPI {
 		FrontendURLS:      strings.Split(getEnv("FRONTEND_URLS", "http://127.0.0.1:3000,http://127.0.0.1:3001,http://localhost:3000,http://localhost:3001"), ","),
 		Base:              "skillcode",
 		ModeEnv:           getEnv("MODE_ENV", "development"),
-		ClusterName:       "my-cluster",
+		ClusterName:       "skillcode-cluster",
 		Namespace:         getEnv("NAMESPACE", "default"),
 		KubeconfigPath:    getEnv("KUBECONFIG", filepath.Join(os.Getenv("HOME"), ".kube", "config")),
 		UniqueAssetsDir:   "./unique-assets",
 		JobTemplatePath:   "./template-assets/job-template.yaml",
 		TemplateAssetsDir: "./template-assets",
+		ClusterConfigFile: "./kind-config.yaml",
 	}
 }
 

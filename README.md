@@ -53,14 +53,14 @@
 - check backedn logs at logs dir
 ---
 ### issue: 
-- my-cluster can be present but container my-cluster-control-plane missing (deleted by  user couse its created by default)- server will exit immediately
+- skillcode-cluster can be present but container skillcode-cluster-control-plane missing (deleted by  user couse its created by default)- server will exit immediately
 
 
 
 ### limitations:
 - as server starts it checks for dependencies:
-- connect to mongo, my-cluster exists, kind installed
-- there might be name collision whith my-cluster 
+- connect to mongo, skillcode-cluster exists, kind installed
+- there might be name collision whith skillcode-cluster 
 - if something goes wrong it exists, check logs for details
   
 

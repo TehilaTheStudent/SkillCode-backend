@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       PROJECT_ROOT: ${{ github.workspace }}
-      CLUSTER_NAME: my-cluster
+      CLUSTER_NAME: skillcode-cluster
 
     steps:
       # Step: Checkout the code

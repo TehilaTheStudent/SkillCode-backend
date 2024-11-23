@@ -59,7 +59,7 @@ func EnsureClusterExists(clusterName string) error {
 			return nil // Cluster exists
 		}
 	}
-	_, err = utils.RunCommand("kind", "create", "cluster", "--name", clusterName)
+	_, err = utils.RunCommand("kind", "create", "cluster", "--name", clusterName, config.GlobalConfigAPI.ClusterConfigFile)
 	if err != nil {
 		return fmt.Errorf("failed to create Kind cluster: %v", err)
 	}
@@ -68,8 +68,7 @@ func EnsureClusterExists(clusterName string) error {
 
 // NewSharedTester initializes the SharedTester with Kubernetes client
 func NewSharedTester(kubeconfigPath, namespace string) (*tester.SharedTester, error) {
-	// apiServerURL := "https://localhost:36912"
-	apiServerURL := "https://host.docker.internal:36911"
+	apiServerURL :=  "https://host.docker.internal:37000"
 	// Pass the API server URL and kubeconfig path
 	config, err := clientcmd.BuildConfigFromFlags(apiServerURL, kubeconfigPath)
 	if err != nil {

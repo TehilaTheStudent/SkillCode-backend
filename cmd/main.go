@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"os"
 
@@ -15,43 +14,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.uber.org/zap"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func main() {
-	fmt.Println("Successfully connected to API server. Namespaces:")
-
-	kubeconfigPath := "/root/.kube/config" // Path to kubeconfig inside container
-	apiServerURL := "https://host.docker.internal:37000"
-
-
-
-	config8, err := clientcmd.BuildConfigFromFlags(apiServerURL, kubeconfigPath)
-	if err != nil {
-		fmt.Printf("Failed to build config: %v\n", err)
-		os.Exit(1)
-	}
-
-	clientset, err := kubernetes.NewForConfig(config8)
-	if err != nil {
-		fmt.Printf("Failed to create Kubernetes client: %v\n", err)
-		os.Exit(1)
-	}
-
-	// Test by listing namespaces
-	namespaces, err := clientset.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
-	if err != nil {
-		fmt.Printf("Failed to connect to API server: %v\n", err)
-		os.Exit(1)
-	}
-
-	fmt.Println("Successfully connected to API server. Namespaces:")
-	for _, ns := range namespaces.Items {
-		fmt.Println(ns.Name)
-	}
+	
 	// Initialize the logger
 	logger, err := config.InitLogger()
 	if err != nil {

@@ -20,3 +20,6 @@ sudo mv ./kubectl /usr/local/bin/kubectl
 
 
 docker ps --format "table {{.Names}}\t{{.Ports}}"
+
+
+kind create cluster --name skillcode-cluster --config kind-config.yaml

@@ -17,7 +17,7 @@ sudo mv ./kind /usr/local/bin/kind
 #### **2. Create a kind Cluster**
 Create a kind cluster. By default, kind sets up a single-node Kubernetes cluster:
 ```bash
-kind create cluster --name my-cluster
+kind create cluster --name skillcode-cluster
 ```
 
 This will:
@@ -26,7 +26,7 @@ This will:
 
 Verify the cluster is up and running:
 ```bash
-kubectl cluster-info --context kind-my-cluster
+kubectl cluster-info --context kind-skillcode-cluster
 ```
 
 ---
@@ -169,7 +169,7 @@ If your Go program runs inside the kind cluster (e.g., as a Pod):
 ### **Summary: Key Steps**
 1. Install kind and create a cluster:
    ```bash
-   kind create cluster --name my-cluster
+   kind create cluster --name skillcode-cluster
    ```
 2. Set up kubeconfig:
    - Use the default kubeconfig location (`~/.kube/config`) or explicitly set it via the `KUBECONFIG` environment variable.
