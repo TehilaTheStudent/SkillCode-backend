@@ -2,7 +2,7 @@ package dependencies
 
 import (
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/config"
-	tester "github.com/TehilaTheStudent/SkillCode-backend/internal/testing"
+	tester "github.com/TehilaTheStudent/SkillCode-backend/internal/tester"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 

@@ -3,5 +3,6 @@
     "files.trimFinalNewlines": true,
     "go.toolsEnvVars": {
         "PROJECT_ROOT": "${workspaceFolder}"
-    }
+    },
+    "java.configuration.updateBuildConfiguration": "interactive"
 }

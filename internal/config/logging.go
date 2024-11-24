@@ -46,7 +46,7 @@ func InitLogger() (*zap.Logger, error) {
 	logger := zap.New(core, zap.AddCaller())
 
 	// Ensure the log file has the correct permissions
-	if err := ensureFilePermissions(logFilePath, 0755); err != nil {
+	if err := ensureFilePermissions(logFilePath, 0777); err != nil {
 		return nil, fmt.Errorf("failed to set file permissions: %w", err)
 	}
 
@@ -58,17 +58,33 @@ func InitLogger() (*zap.Logger, error) {
 	return logger, nil
 }
 
-// ensureFilePermissions ensures the log file has the desired permissions
+// ensureFilePermissions ensures the directory and file have the correct permissions and ownership.
 func ensureFilePermissions(filePath string, perms os.FileMode) error {
-	if err := os.MkdirAll(LogDir, 0755); err != nil {
+	// Ensure the logs directory exists with full permissions
+	if err := os.MkdirAll(LogDir, perms); err != nil {
 		return fmt.Errorf("failed to create logs directory: %w", err)
 	}
 
-	if _, err := os.Stat(filePath); err == nil {
-		// File exists; set permissions
-		if err := os.Chmod(filePath, perms); err != nil {
-			return fmt.Errorf("failed to set file permissions: %w", err)
+	// Check if the log file exists
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		// Create the file if it does not exist
+		file, err := os.Create(filePath)
+		if err != nil {
+			return fmt.Errorf("failed to create log file: %w", err)
 		}
+		defer file.Close()
 	}
+
+	// Ensure the directory has full permissions
+	if err := os.Chmod(LogDir, perms); err != nil {
+		return fmt.Errorf("failed to set directory permissions: %w", err)
+	}
+
+	// Set the desired permissions for the log file
+	if err := os.Chmod(filePath, perms); err != nil {
+		return fmt.Errorf("failed to set file permissions: %w", err)
+	}
+
 	return nil
 }
+

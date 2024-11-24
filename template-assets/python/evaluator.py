@@ -2,16 +2,26 @@ import ast
 import json
 import os
 from jsonschema import validate, ValidationError
+import converter
 
 
-def parse_input(input_string):
-    try:
-        return ast.literal_eval(input_string)  # Safely parse input
-    except (ValueError, SyntaxError) as e:
-        return f"Error parsing input: {str(e)}"
 
 
-def run_test_cases(compiled_code, test_cases, function_name):
+
+
+
+def run_test_cases(compiled_code, test_cases, function_name,function_config):
+    """
+    Run the provided test cases against the compiled user code.
+
+    Args:
+        compiled_code (code): The compiled user code.
+        test_cases (list): A list of test cases, each containing 'parameters' and 'expected_output'.
+        function_name (str): The name of the function to test.
+
+    Returns:
+        dict: A dictionary containing the overall status, results of each test case, and error details if any.
+    """
     results = []
     namespace = {}
     all_passed = True  # Track if all test cases pass
@@ -38,8 +48,8 @@ def run_test_cases(compiled_code, test_cases, function_name):
     for case in test_cases:
         try:
             # Parse each parameter string individually
-            inputs = [parse_input(param) for param in case["parameters"]]
-            expected_output = parse_input(case["expected_output"])
+            inputs = [converter.listy_to_type(case['parameters'][i],function_config['parameters'][i]['param_type']) for i in range(len(case["parameters"]))]
+            expected_output = converter.listy_to_type(case["expected_output"],function_config['return_type'])
 
             # Invoke the user's function
             actual_output = user_function(*inputs)
@@ -48,7 +58,7 @@ def run_test_cases(compiled_code, test_cases, function_name):
             if actual_output == expected_output:
                 results.append(
                     {
-                        "status": "pass",
+                        "status": "pass",   
                         "parameters": case["parameters"],
                         "expected_output": str(expected_output),
                         "actual_output": str(actual_output),
@@ -85,8 +95,20 @@ def run_test_cases(compiled_code, test_cases, function_name):
 
 
 def evaluate_user_code(
-    user_code, test_cases, function_name, schema_path="../feedback_schema.json"
+    user_code, test_cases, function_name,function_config, schema_path="../feedback_schema.json"
 ):
+    """
+    Evaluate the user's code by compiling it, running test cases, and validating the results against a schema.
+
+    Args:
+        user_code (str): The user's code as a string.
+        test_cases (list): A list of test cases, each containing 'parameters' and 'expected_output'.
+        function_name (str): The name of the function to test.
+        schema_path (str): The path to the JSON schema file for validation.
+
+    Returns:
+        dict: A dictionary containing the overall status, results of each test case, and error details if any.
+    """
     try:
         # Resolve the schema path relative to this script
         script_dir = os.path.dirname(
@@ -109,7 +131,7 @@ def evaluate_user_code(
             }
 
         # Step 2: Run test cases
-        results = run_test_cases(compiled_code, test_cases, function_name)
+        results = run_test_cases(compiled_code, test_cases, function_name,function_config)
 
         # Step 3: Validate against schema
         try:

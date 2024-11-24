@@ -33,6 +33,8 @@ type ConfigAPI struct {
 	UniqueAssetsDir   string
 	JobTemplatePath   string
 	ClusterConfigFile string
+	ClusterPort       string
+	KindServerUrl     string
 }
 
 // NewLanguageConfig creates a new language-specific configuration for a given language.
@@ -76,7 +78,9 @@ func newConfigAPI() *ConfigAPI {
 		UniqueAssetsDir:   "./unique-assets",
 		JobTemplatePath:   "./template-assets/job-template.yaml",
 		TemplateAssetsDir: "./template-assets",
-		ClusterConfigFile: "./kind-config.yaml",
+		ClusterConfigFile: "kind-config.yaml",
+		ClusterPort:       getEnv("CLUSTER_PORT", "37000"),
+		KindServerUrl:     getEnv("KIND_SERVER_URL", "https://localhost"),
 	}
 }
 

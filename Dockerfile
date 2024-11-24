@@ -35,7 +35,7 @@ WORKDIR /app
 
 # Copy the template-assets directory into the container
 COPY ./template-assets /app/template-assets
-
+COPY ./kind-config.yaml /app/kind-config.yaml
 # Set the PROJECT_ROOT environment variable
 ENV PROJECT_ROOT=/app
 

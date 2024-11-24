@@ -5,4 +5,5 @@ logs/
 
 template-assets/python/__pycache__/
 template-assets/javascript/node_modules/
-unique-assets/
+template-assets/java/target/
+template-assets/java/UserSolution.class

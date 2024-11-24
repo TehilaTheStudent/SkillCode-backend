@@ -10,14 +10,14 @@ import (
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/middleware"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/repository"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/service"
-	tester "github.com/TehilaTheStudent/SkillCode-backend/internal/testing"
+	tester "github.com/TehilaTheStudent/SkillCode-backend/internal/tester"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.uber.org/zap"
 )
 
 func main() {
-	
+
 	// Initialize the logger
 	logger, err := config.InitLogger()
 	if err != nil {

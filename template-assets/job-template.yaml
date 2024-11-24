@@ -20,15 +20,13 @@ spec:
             - sh
             - -c
             - |
-              echo "$USER_SCRIPT" > /sandbox/app/main.$FILE_EXTENSION && $RUNTIME_COMMAND /sandbox/app/main.$FILE_EXTENSION
+              echo "$USER_SCRIPT" > /sandbox/app/Main.$FILE_EXTENSION && ./run.sh /sandbox/app/Main.$FILE_EXTENSION
           env:
             - name: USER_SCRIPT
               valueFrom:
                 configMapKeyRef:
                   name: user-script-{{.REQUEST_ID}} # Unique ConfigMap for the request
                   key: run_tests # Key in the ConfigMap
-            - name: RUNTIME_COMMAND
-              value: "{{.RUNTIME_COMMAND}}" # Placeholder for dynamic runtime command (e.g., python, node)
             - name: FILE_EXTENSION
               value: "{{.FILE_EXTENSION}}" # Placeholder for file extension (e.g., py, js)
           resources:

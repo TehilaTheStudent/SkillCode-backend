@@ -14,12 +14,14 @@ import (
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/utils"
 )
 
+func GetRuntime(language model.PredefinedSupportedLanguage) string {
+	return config.GlobalLanguageConfigs[language].AssetsDir + "/run.sh"
+}
 
 func (t *UniqueTester) ExecuteUniqueTestProducton(scriptContent string) (string, error) {
 	params := map[string]string{
 		"JOB_NAME":        t.jobName,
 		"IMAGE_NAME":      t.imageName,
-		"RUNTIME_COMMAND": t.runtimeCommand,
 		"FILE_EXTENSION":  t.fileExtension,
 		"REQUEST_ID":      t.requestID,
 	}
@@ -65,14 +67,20 @@ func CreateTestRunnerScript(language model.PredefinedSupportedLanguage,  questio
 		functionName = coding.ToPythonStyle(question.FunctionConfig.Name)
 	} else if language == model.JavaScript {
 		functionName = coding.ToJSStyle(question.FunctionConfig.Name)
-	} else {
+	}else if language == model.Java {
+			functionName = coding.ToJavaStyle(question.FunctionConfig.Name) 
+	}else {
 		return "", fmt.Errorf("unsupported language: %v", language)
 	}
-
+	configJSON, err := json.MarshalIndent(question.FunctionConfig, "", "  ")
+	if err != nil {
+		return "",fmt.Errorf("Error marshaling FunctionConfig:", err)
+	}
 	data := map[string]string{
 		"UserCode":     userCode,
 		"TestCases":    string(testCasesJSON),
 		"FunctionName": functionName,
+		"FunctionConfig":string(configJSON),
 	}
 
 	// Generate the test runner

@@ -12,6 +12,20 @@ class Graph {
     toString() {
         return `Graph(val=${this.val})`;
     }
+
+    hashCode() {
+        const hash = (str) => {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = (hash << 5) - hash + char;
+                hash |= 0; // Convert to 32bit integer
+            }
+            return hash;
+        };
+        const nodeHashes = Array.from(this.neighbors, (neighbor) => neighbor.hashCode()).sort();
+        return hash(`${this.val}:${nodeHashes.join(',')}`);
+    }
 }
 
 class TreeNode {
@@ -30,6 +44,21 @@ class TreeNode {
     toString() {
         return `TreeNode(val=${this.val})`;
     }
+
+    hashCode() {
+        const hash = (str) => {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = (hash << 5) - hash + char;
+                hash |= 0; // Convert to 32bit integer
+            }
+            return hash;
+        };
+        const leftHash = this.left ? this.left.hashCode() : 0;
+        const rightHash = this.right ? this.right.hashCode() : 0;
+        return hash(`${this.val}:${leftHash}:${rightHash}`);
+    }
 }
 
 class ListNode {
@@ -45,6 +74,25 @@ class ListNode {
 
     toString() {
         return `ListNode(val=${this.val})`;
+    }
+
+    hashCode() {
+        const hash = (str) => {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = (hash << 5) - hash + char;
+                hash |= 0; // Convert to 32bit integer
+            }
+            return hash;
+        };
+        let current = this;
+        let hashValue = 0;
+        while (current) {
+            hashValue = hash(`${hashValue}:${current.val}`);
+            current = current.next;
+        }
+        return hashValue;
     }
 }
 

@@ -12,9 +12,9 @@ sys.stdout = open(os.devnull, 'w')  # Suppress stdout
 user_code = """{{.UserCode}}"""
 test_cases = {{.TestCases}}
 function_name = "{{.FunctionName}}"
+function_config = {{.FunctionConfig}}
 
-
-results = evaluate_user_code(user_code, test_cases, function_name)
+results = evaluate_user_code(user_code, test_cases, function_name,function_config)
 
 # Restore stdout before printing
 sys.stdout.close()

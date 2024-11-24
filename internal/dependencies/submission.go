@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/config"
-	tester "github.com/TehilaTheStudent/SkillCode-backend/internal/testing"
+	tester "github.com/TehilaTheStudent/SkillCode-backend/internal/tester"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/utils"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
@@ -21,7 +21,7 @@ func SetupSubmissionDependencies(kubeconfigPath, namespace string) (*tester.Shar
 
 	// 1. Ensure Kind is installed
 	if err := EnsureKindInstalled(); err != nil {
-		return nil, fmt.Errorf("failed to set kubectl context: %w", err)
+		return nil, fmt.Errorf("kind not installed: %w", err)
 	}
 
 	// 2. Ensure Kind cluster exists
@@ -59,7 +59,7 @@ func EnsureClusterExists(clusterName string) error {
 			return nil // Cluster exists
 		}
 	}
-	_, err = utils.RunCommand("kind", "create", "cluster", "--name", clusterName, config.GlobalConfigAPI.ClusterConfigFile)
+	_, err = utils.RunCommand("kind", "create", "cluster", "--name", clusterName,"--config", config.GlobalConfigAPI.ClusterConfigFile)
 	if err != nil {
 		return fmt.Errorf("failed to create Kind cluster: %v", err)
 	}
@@ -68,7 +68,7 @@ func EnsureClusterExists(clusterName string) error {
 
 // NewSharedTester initializes the SharedTester with Kubernetes client
 func NewSharedTester(kubeconfigPath, namespace string) (*tester.SharedTester, error) {
-	apiServerURL :=  "https://host.docker.internal:37000"
+	apiServerURL := config.GlobalConfigAPI.KindServerUrl+":"+config.GlobalConfigAPI.ClusterPort
 	// Pass the API server URL and kubeconfig path
 	config, err := clientcmd.BuildConfigFromFlags(apiServerURL, kubeconfigPath)
 	if err != nil {

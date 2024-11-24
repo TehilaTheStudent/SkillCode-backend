@@ -9,9 +9,10 @@ const userCode = `{{.UserCode}}`;
 
 const testCases = {{.TestCases}};
 const functionName = "{{.FunctionName}}";
+const functionConfig = {{.FunctionConfig}};
 
 // Evaluate user code
-const results = evaluateUserCode(userCode, testCases, functionName);
+const results = evaluateUserCode(userCode, testCases, functionName,functionConfig);
 
 // Restore console.log
 console.log = originalConsoleLog;

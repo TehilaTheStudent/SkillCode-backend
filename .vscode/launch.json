@@ -20,7 +20,9 @@
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceFolder}/cmd/main.go",
-            "args": ["ENV_MOD=development"],
+            "env": {
+                "MODE_ENV": "development"
+            },
         },
         {
             "name": "Launch production",
@@ -28,7 +30,9 @@
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceFolder}/cmd/main.go",
-            "args": ["ENV_MOD=production"],
+            "env": {
+                "MODE_ENV": "production"
+            },
         },
         {
             "name": "Debug Go Test",
@@ -47,6 +51,29 @@
             "mode": "auto",
             "program": "${file}",
             "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "debug js",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${file}"
+        },
+        {
+            "type": "java",
+            "name": "Launch java Main",
+            "request": "launch",
+            "mainClass": "com.generated.Main",
+            "projectName": "java"
         }
-    ]
+    ]   
 }

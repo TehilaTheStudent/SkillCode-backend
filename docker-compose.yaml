@@ -33,6 +33,8 @@ services:
     depends_on:
       - mongo
     environment:
+      - CLUSTER_PORT=37000
+      - KIND_SERVER_URL=https://host.docker.internal
       - MONGO_URI=mongodb://mongo:27017
       - MONGO_DB=skillcode_db
       - KUBECONFIG=/root/.kube/config
@@ -48,7 +50,7 @@ services:
     depends_on:
       - skillcode-backend          # Ensure the backend starts first
     environment:
-      - BACKEND_URL=http://skillcode-backend:8080/skillcode    # URL to access your backend API
+      - BACKEND_URL=http://localhost:8080/skillcode    # URL to access your backend API
     ports:
       - "3000:3000" 
 volumes:

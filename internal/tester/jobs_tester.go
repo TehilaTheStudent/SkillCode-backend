@@ -96,7 +96,11 @@ func (t *UniqueTester) waitForJobAndFetchLogs(jobName string) (string, error) {
 
             // Check if the Job failed
             if job.Status.Failed > 0 {
-                return "", fmt.Errorf("Job '%s' failed. Check logs or events for more details.", jobName)
+                logs, logErr := t.getJobLogs(jobName)
+                if logErr != nil {
+                    return "", fmt.Errorf("Job '%s' failed and failed to get logs: %v", jobName, logErr)
+                }
+                return "", fmt.Errorf("Job '%s' failed. Logs:\n%s", jobName, logs)
             }
 
             // Optional: Log progress for debugging

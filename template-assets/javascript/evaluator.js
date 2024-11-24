@@ -1,6 +1,7 @@
 const Ajv = require("ajv");
 const fs = require("fs");
 const path = require('path');
+const converter = require('./converter');
 
 function loadSchema() {
   try {
@@ -55,14 +56,14 @@ function validateResponse(response, validate) {
   }
 }
 
-function runTestCases(userFunction, testCases, validate) {
+function runTestCases(userFunction, testCases, validate,functionConfig) {
   const results = [];
   let allPassed = true;
 
   for (const testCase of testCases) {
     try {
-      const inputs = testCase.parameters.map(parseInput);
-      const expectedOutput = parseInput(testCase.expected_output);
+      const inputs = testCase.parameters.map((param, index) => converter.listyToType(param, functionConfig.parameters[index].param_type));
+      const expectedOutput = converter.listyToType(testCase.expected_output, functionConfig.return_type);
 
       const actualOutput = userFunction(...inputs);
 
@@ -109,7 +110,7 @@ function runTestCases(userFunction, testCases, validate) {
   return response;
 }
 
-function evaluateUserCode(userCode, testCases, functionName) {
+function evaluateUserCode(userCode, testCases, functionName, functionConfig) {
   let userFunction;
   let validate;
   try {
@@ -163,7 +164,7 @@ function evaluateUserCode(userCode, testCases, functionName) {
     return response;
   }
 
-  return runTestCases(userFunction, testCases, validate);
+  return runTestCases(userFunction, testCases, validate,functionConfig);
 }
 
 module.exports = { evaluateUserCode };

@@ -1,0 +1,202 @@
+import java.util.*;
+
+class TreeNode<T> {
+    T val;
+    TreeNode<T> left;
+    TreeNode<T> right;
+
+    public TreeNode(T val) {
+        this.val = val;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof TreeNode)) return false;
+        TreeNode<?> other = (TreeNode<?>) obj;
+        return Objects.equals(val, other.val)
+                && Objects.equals(left, other.left)
+                && Objects.equals(right, other.right);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(val, left, right);
+    }
+
+    @Override
+    public String toString() {
+        return "TreeNode{" + "val=" + val + ", left=" + left + ", right=" + right + '}';
+    }
+}
+
+class ListNode<T> {
+    T val;
+    ListNode<T> next;
+
+    public ListNode(T val) {
+        this.val = val;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof ListNode)) return false;
+        ListNode<?> current = this;
+        ListNode<?> other = (ListNode<?>) obj;
+
+        while (current != null && other != null) {
+            if (!Objects.equals(current.val, other.val)) return false;
+            current = current.next;
+            other = other.next;
+        }
+
+        return current == null && other == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 0;
+        ListNode<T> current = this;
+        while (current != null) {
+            hash = Objects.hash(hash, current.val);
+            current = current.next;
+        }
+        return hash;
+    }
+
+    @Override
+    public String toString() {
+        return "ListNode{" + "val=" + val + ", next=" + next + '}';
+    }
+}
+
+class Graph<T> {
+    Map<T, List<T>> adjList = new HashMap<>();
+
+    public void addEdge(T u, T v) {
+        adjList.computeIfAbsent(u, k -> new ArrayList<>()).add(v);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof Graph)) return false;
+        Graph<?> other = (Graph<?>) obj;
+        return Objects.equals(adjList, other.adjList);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(adjList);
+    }
+
+    @Override
+    public String toString() {
+        return "Graph{" + "adjList=" + adjList + '}';
+    }
+}
+
+class Utils {
+
+    // Generate Tree from list (BFS order)
+    public static <T> TreeNode<T> generateTree(List<T> values) {
+        if (values == null || values.isEmpty()) return null;
+
+        TreeNode<T> root = new TreeNode<>(values.get(0));
+        Queue<TreeNode<T>> queue = new LinkedList<>();
+        queue.add(root);
+
+        int i = 1;
+        while (!queue.isEmpty() && i < values.size()) {
+            TreeNode<T> current = queue.poll();
+
+            if (i < values.size() && values.get(i) != null) {
+                current.left = new TreeNode<>(values.get(i));
+                queue.add(current.left);
+            }
+            i++;
+
+            if (i < values.size() && values.get(i) != null) {
+                current.right = new TreeNode<>(values.get(i));
+                queue.add(current.right);
+            }
+            i++;
+        }
+        return root;
+    }
+
+    // Export Tree to list (BFS order)
+    public static <T> List<T> exportTree(TreeNode<T> root) {
+        List<T> result = new ArrayList<>();
+        if (root == null) return result;
+
+        Queue<TreeNode<T>> queue = new LinkedList<>();
+        queue.add(root);
+
+        while (!queue.isEmpty()) {
+            TreeNode<T> current = queue.poll();
+            if (current != null) {
+                result.add(current.val);
+                queue.add(current.left);
+                queue.add(current.right);
+            } else {
+                result.add(null);
+            }
+        }
+
+        // Trim trailing nulls
+        while (!result.isEmpty() && result.get(result.size() - 1) == null) {
+            result.remove(result.size() - 1);
+        }
+
+        return result;
+    }
+
+    // Generate Graph from edges
+    public static <T> Graph<T> generateGraph(List<List<T>> edges) {
+        Graph<T> graph = new Graph<>();
+        for (List<T> edge : edges) {
+            if (edge.size() != 2) {
+                throw new IllegalArgumentException("Each edge must have exactly two elements");
+            }
+            graph.addEdge(edge.get(0), edge.get(1));
+        }
+        return graph;
+    }
+
+    // Export Graph to edges
+    public static <T> List<List<T>> exportGraph(Graph<T> graph) {
+        List<List<T>> edges = new ArrayList<>();
+        for (Map.Entry<T, List<T>> entry : graph.adjList.entrySet()) {
+            for (T neighbor : entry.getValue()) {
+                edges.add(Arrays.asList(entry.getKey(), neighbor));
+            }
+        }
+        return edges;
+    }
+
+    // Generate Linked List
+    public static <T> ListNode<T> generateLinkedList(List<T> values) {
+        if (values == null || values.isEmpty()) return null;
+
+        ListNode<T> head = new ListNode<>(values.get(0));
+        ListNode<T> current = head;
+
+        for (int i = 1; i < values.size(); i++) {
+            current.next = new ListNode<>(values.get(i));
+            current = current.next;
+        }
+        return head;
+    }
+
+    // Export Linked List
+    public static <T> List<T> exportLinkedList(ListNode<T> head) {
+        List<T> result = new ArrayList<>();
+        ListNode<T> current = head;
+
+        while (current != null) {
+            result.add(current.val);
+            current = current.next;
+        }
+
+        return result;
+    }
+}

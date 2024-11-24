@@ -12,27 +12,19 @@ func GetFileExtension(language PredefinedSupportedLanguage) string {
 		return "py"
 	case JavaScript:
 		return "js"
+	case Java:
+		return "java"
 	default:
 		return "" // Unsupported language
 	}
 }
 
 
-func GetRuntime(language PredefinedSupportedLanguage) string{
-	switch language {
-    case Python:
-        return "python3"
-    case JavaScript:
-        return "node"
-    default:
-        return "" // Unsupported language
-    }
-}
-
 
 var PredefinedSupportedLanguages = []PredefinedSupportedLanguage{
 	Python,
 	JavaScript,
+	Java,
 }
 
 func LowerToEnum(language string) (PredefinedSupportedLanguage, error) {
@@ -44,6 +36,8 @@ func LowerToEnum(language string) (PredefinedSupportedLanguage, error) {
 		langEnum = Python
 	case "javascript":
 		langEnum = JavaScript
+	case "java":
+		langEnum = Java
 	default:
 		return "", NewCustomError(400, fmt.Sprintf("unsupported language: %s", language))
 	}

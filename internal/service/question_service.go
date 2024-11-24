@@ -11,7 +11,7 @@ import (
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/model"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/parser_validator"
 	"github.com/TehilaTheStudent/SkillCode-backend/internal/repository"
-	tester "github.com/TehilaTheStudent/SkillCode-backend/internal/testing"
+	tester "github.com/TehilaTheStudent/SkillCode-backend/internal/tester"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -212,7 +212,7 @@ func (s *QuestionService) TestUniqueQuestion(questionID string, submission model
 		s.SharedTester,
 		fmt.Sprintf("job-%s", requestID),
 		config.GlobalLanguageConfigs[submission.Language].ImageName,
-		model.GetRuntime(submission.Language),
+		tester.GetRuntime(submission.Language),
 		model.GetFileExtension(submission.Language),
 		requestID, submission.Language,
 	)

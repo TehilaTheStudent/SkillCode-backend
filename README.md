@@ -28,6 +28,7 @@
     - Frontend: `3000`
     - Backend: `8080`
     - MongoDB: `27017`
+    - kind cluster `37000`
 
 
 ---
@@ -68,17 +69,21 @@
 
 ## endpoints
 
-| **HTTP Method** | **Endpoint**                         |
-| --------------- | ------------------------------------ |
-| `POST`          | `/skillcode/questions`               |
-| `GET`           | `/skillcode/questions/:id`           |
-| `GET`           | `/skillcode/questions`               |
-| `PUT`           | `/skillcode/questions/:id`           |
-| `DELETE`        | `/skillcode/questions/:id`           |
-| `POST`          | `/skillcode/questions/:id/test`      |
-| `GET`           | `/skillcode/questions/:id/signature` |
-| `GET`           | `/skillcode/ds_utils`                |
-| `GET`           | `/skillcode/configs`                 |
+
+
+| **Method** | **Endpoint**                            | **Description**                                   |
+|------------|-----------------------------------------|---------------------------------------------------|
+| POST       | `/skillcode/questions`                 | Create a new question.                           |
+| GET        | `/skillcode/questions/:id`             | Retrieve a question by its ID.                   |
+| GET        | `/skillcode/questions`                 | Retrieve all questions.                          |
+| PUT        | `/skillcode/questions/:id`             | Update a specific question by its ID.            |
+| DELETE     | `/skillcode/questions/:id`             | Delete a specific question by its ID.            |
+| POST       | `/skillcode/questions/:id/test`        | Test a question with provided inputs.            |
+| GET        | `/skillcode/questions/:id/signature`   | Get the function signature of a specific question.|
+| GET        | `/skillcode/ds_utils`                  | Serve utility functions/data structures.          |
+| POST       | `/skillcode/ds_utils/examples`         | Generate examples for data structures.            |
+
+This version simplifies the view while retaining the key details about each endpoint.
 
 
 ### running user submissions locally for debugging:
@@ -91,30 +96,21 @@ MODE_ENV=development docker-compose up
 
 - you can run in development mode- no jobs, but run the dev/dev.sh script before and after
 
+### cleanup
+-delete the skillcode-cluster 
 
 
+### testing in parallel
+- run k6 run tests/load-test.js
 
-if you dont have kubectl/kind
+if you dont have kind
 ---
 
 ### **Install Kind**
 ```bash
-curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.20.0/kind-linux-amd64
+curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.25.0/kind-linux-amd64
+
 chmod +x ./kind
 sudo mv ./kind /usr/local/bin/kind
 kind --version
 ```
-
----
-
-### **Install kubectl**//i have to check if this is needed
-```bash
-curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-chmod +x ./kubectl
-sudo mv ./kubectl /usr/local/bin/kubectl
-kubectl version --client
-```
-
----
-
-These commands install the latest versions of **Kind** and **kubectl** and verify their installations.
