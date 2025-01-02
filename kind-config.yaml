@@ -10,3 +10,4 @@ kubeadmConfigPatches:
       certSANs:
         - host.docker.internal
         - localhost
+        - 0.0.0.0

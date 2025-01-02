@@ -39,11 +39,12 @@ services:
       - MONGO_DB=skillcode_db
       - KUBECONFIG=/root/.kube/config
       - PORT=8080
-      - MODE_ENV=${MODE_ENV:-production}  # Default to production if not set
+      - MODE_ENV=development  
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock # Mount Docker daemon socket for Kind
       - ~/.kube:/root/.kube                       # Mount kubeconfig to interact with Kind cluster
       - ./logs:/app/logs # logs
+
   skillcode-frontend:
     image: tehilathestudent/skillcode-frontend:latest
     container_name: skillcode-frontend

@@ -36,12 +36,12 @@ WORKDIR /app
 # Copy the template-assets directory into the container
 COPY ./template-assets /app/template-assets
 COPY ./kind-config.yaml /app/kind-config.yaml
+COPY ./dev/dev.sh /app/dev.sh
 # Set the PROJECT_ROOT environment variable
 ENV PROJECT_ROOT=/app
 
 # Expose port 8080 for the Go server
 EXPOSE 8080
 
-# Command to run the Go server
-
-CMD ["./main"]
+# Command to run the script and then the Go server
+CMD ["sh", "-c", "./dev.sh && ./main"]

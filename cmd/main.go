@@ -21,6 +21,8 @@ func main() {
 	// Initialize the logger
 	logger, err := config.InitLogger()
 	if err != nil {
+		fmt.Println("Failed to initialize logger")
+		fmt.Println("Error: ", err)
 		os.Exit(1)
 	}
 	// Load the configuration

@@ -20,12 +20,13 @@ type LanguageConfig struct {
 
 // Config holds all dynamic configuration values
 type ConfigAPI struct {
+	ModeEnv string
+
 	MongoDBURI        string
 	DBName            string
 	Port              string
 	FrontendURLS      []string
 	Base              string
-	ModeEnv           string
 	ClusterName       string
 	TemplateAssetsDir string
 	Namespace         string
