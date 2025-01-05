@@ -14,74 +14,20 @@ jobs:
       CLUSTER_NAME: skillcode-cluster
 
     steps:
-      # Step: Checkout the code
-      - name: Checkout code
+      # Step: Checkout the source code repo
+      - name: Checkout source code
         uses: actions/checkout@v2
 
       # Step: Set up Docker Buildx
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
 
-      # Step: Install Docker Compose
-      # - name: Install Docker Compose
-      #   run: |
-      #     sudo apt-get update
-      #     sudo apt-get install -y docker-compose
-
-      # Step: Install Kind
-      # - name: Install Kind
-      #   run: |
-      #     curl -Lo ./kind https://kind.sigs.k8s.io/dl/latest/kind-linux-amd64
-      #     chmod +x ./kind
-      #     sudo mv ./kind /usr/local/bin/
-
-      # Step: Install kubectl
-      # - name: Install kubectl
-      #   run: |
-      #     curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-      #     chmod +x ./kubectl
-      #     sudo mv ./kubectl /usr/local/bin/
-
-      # # Step: Create Kind Cluster
-      # - name: Create Kind Cluster
-      #   run: kind create cluster --name ${{ env.CLUSTER_NAME }}
-
-      # Step: Run Unit Tests
-      # - name: Run Unit Tests
-      #   run: |
-      #     sudo apt-get install -y netcat
-      #     go mod tidy
-      #     go test ./internal/... -v
-
-      # # Step: Delete Kind Cluster
-      # - name: Delete Kind Cluster
-      #   if: always()
-      #   run: kind delete cluster --name ${{ env.CLUSTER_NAME }}
-
       # Step: Build Docker Image
       - name: Build Docker Image
-        if: success()
-        run: docker build -t tehilathestudent/skillcode-backend:latest .
-      # Step: Build Docker Image for Custom Python
-      - name: Build Custom Python Docker Image
-        if: success()
-        run: |
-          docker build \
-            -t tehilathestudent/skillcode-custom-python:latest \
-            -f template-assets/python/Dockerfile \
-            template-assets/
+        run: docker build -t tehilathestudent/skillcode-backend:${{ github.sha }} .
 
-      # Step: Build Docker Image for Custom JavaScript
-      - name: Build Custom JavaScript Docker Image
-        if: success()
-        run: |
-          docker build \
-            -t tehilathestudent/skillcode-custom-javascript:latest \
-            -f template-assets/javascript/Dockerfile \
-            template-assets/
       # Step: Log in to Docker Hub
       - name: Log in to Docker Hub
-        if: success()
         uses: docker/login-action@v1
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
@@ -89,27 +35,27 @@ jobs:
 
       # Step: Push Docker Image
       - name: Push Docker Image
-        if: success()
-        run: docker push tehilathestudent/skillcode-backend:latest
-      # Step: Push Custom Python Docker Image
-      - name: Push Custom Python Docker Image
-        if: success()
-        run: docker push tehilathestudent/skillcode-custom-python:latest
+        run: docker push tehilathestudent/skillcode-backend:${{ github.sha }}
 
-      # Step: Push Custom JavaScript Docker Image
-      - name: Push Custom JavaScript Docker Image
-        if: success()
-        run: docker push tehilathestudent/skillcode-custom-javascript:latest
-      # Step: Run Integration Tests
-      # - name: Run Integration Tests
-      #   if: success()
-      #   run: |
-      #     docker-compose -f docker-compose.yaml up -d mongo
-      #     go test ./tests/integration -v
-      #     docker-compose down
+      # Step: Clone GitOps Repo
+      - name: Clone GitOps Repo
+        run: |
+          git clone https://$TOKEN@github.com/TehilaTheStudent/IoC-for-argocd.git
+        env:
+          TOKEN: ${{ secrets.TOKEN }}
 
-      # Step: Run E2E Tests
-      # - name: Run E2E Tests
-      #   if: success()
-      #   run: |
-      #     docker-compose -f docker-compose.test.yaml up --abort-on-container-exit
+      # Step: Update Helm Values
+      - name: Update Backend Image Tag in Helm Values
+        run: |
+          IMAGE_TAG=${{ github.sha }}
+          yq e ".backend.image = \"tehilathestudent/skillcode-backend:${IMAGE_TAG}\"" -i IoC-for-argocd/skillcode-helm-chart/values.yaml
+
+      # Step: Commit Changes to GitOps Repo
+      - name: Commit Changes
+        run: |
+          cd IoC-for-argocd
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git add skillcode-helm-chart/values.yaml
+          git commit -m "Update backend image tag to ${{ github.sha }}"
+          git push
