@@ -1,0 +1,33 @@
+# Base image with Go and basic tools
+FROM golang:latest
+
+# Set the working directory inside the container
+WORKDIR /app
+
+# Copy the Go module files and download dependencies
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy the entire project into the container
+COPY . .
+
+# Build the Go application
+RUN go build -o main ./cmd/main.go
+
+# Install dependencies: Docker CLI, kubectl, and kind
+RUN apt-get update && \
+    apt-get install -y curl bash && \
+    curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && \
+    chmod +x kubectl && \
+    mv kubectl /usr/local/bin/ && \
+    curl -Lo /usr/local/bin/kind "https://kind.sigs.k8s.io/dl/latest/kind-linux-amd64" && \
+    chmod +x /usr/local/bin/kind
+
+# Set the PROJECT_ROOT environment variable
+ENV PROJECT_ROOT=/app
+
+# Expose port 8080 for the Go server
+EXPOSE 8080
+
+# Command to run the script and then the Go server
+CMD ["sh", "-c", "./dev.sh && ./main"]
